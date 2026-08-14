@@ -21,13 +21,13 @@ async function processFiles(files) {
 
   pagesList.innerHTML = '';
   placeholder.style.display = 'block';
-  placeholder.innerHTML = '<h2>ফাইল প্রসেস হচ্ছে... অনুগ্রহ করে একটু অপেক্ষা করুন ⏳</h2>';
+  placeholder.innerHTML = '<h2>ফাইল প্রসেস হচ্ছে... একটু অপেক্ষা করুন ⏳</h2>';
 
   const firstFile = files[0];
   const fileName = firstFile.name.toLowerCase();
 
   try {
-    // 1. Process CBZ / ZIP
+    // 1. Process CBZ or ZIP
     if (fileName.endsWith('.cbz') || fileName.endsWith('.zip')) {
       const zip = await JSZip.loadAsync(firstFile);
       const imagePromises = [];
@@ -46,7 +46,7 @@ async function processFiles(files) {
       const images = await Promise.all(imagePromises);
       renderImages(images);
 
-    // 2. Process CBR / RAR
+    // 2. Process CBR or RAR
     } else if (fileName.endsWith('.cbr') || fileName.endsWith('.rar')) {
       if (typeof unrar === 'undefined') {
         alert("CBR ইঞ্জিন লোড হচ্ছে, ৫ সেকেন্ড অপেক্ষা করে আবার চেষ্টা করুন।");
@@ -71,7 +71,7 @@ async function processFiles(files) {
 
       renderImages(imagePromises);
 
-    // 3. Process Image Files directly
+    // 3. Process Direct Image Files
     } else {
       const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(f.name));
       if (imageFiles.length === 0) {
@@ -102,7 +102,7 @@ function renderImages(images) {
     return;
   }
 
-  // Sort pages numerically (Page 1, Page 2, Page 10...)
+  // Natural numeric sorting (Page 1, Page 2, Page 10...)
   images.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
   placeholder.style.display = 'none';
@@ -113,10 +113,9 @@ function renderImages(images) {
   });
 }
 
-// File Button Listener
+// Event Listeners for File Picker & Drag-and-Drop
 fileInput.addEventListener('change', (e) => processFiles(e.target.files));
 
-// Drag & Drop Listeners
 readerContainer.addEventListener('dragover', (e) => e.preventDefault());
 readerContainer.addEventListener('drop', (e) => {
   e.preventDefault();
