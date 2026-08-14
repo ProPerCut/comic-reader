@@ -1369,3 +1369,130 @@ setScrollSpeed(150);
 setStatus(
   "কোনো Comic খোলা হয়নি"
 );
+/* =========================================================
+   FULLSCREEN AUTO-SCROLL CONTROL AUTO-HIDE
+========================================================= */
+
+/*
+  যখন fullscreen + auto scroll চালু হবে,
+  নিচের control bar automatically hide হবে।
+*/
+
+function hideFullscreenControls() {
+
+  if (document.fullscreenElement && isScrolling) {
+
+    document.body.classList.add(
+      "controls-hidden"
+    );
+
+  }
+
+}
+
+
+/*
+  Auto scroll বন্ধ হলে controls আবার দেখা যাবে।
+*/
+
+function showFullscreenControls() {
+
+  document.body.classList.remove(
+    "controls-hidden"
+  );
+
+}
+
+
+/*
+  Fullscreen অবস্থায় screen-এর যেকোনো জায়গায়
+  click করলে controls আবার দেখা যাবে।
+*/
+
+document.addEventListener(
+  "click",
+  function(event) {
+
+    if (
+      document.fullscreenElement &&
+      isScrolling &&
+      document.body.classList.contains(
+        "controls-hidden"
+      )
+    ) {
+
+      /*
+        Control bar-এর ভেতরে click হলে
+        এই action চালাব না।
+      */
+
+      if (
+        event.target.closest("#mobile-controls")
+      ) {
+
+        return;
+
+      }
+
+      showFullscreenControls();
+
+    }
+
+  }
+);
+
+
+/*
+  Auto Scroll শুরু হলে fullscreen check করে
+  controls hide করা হবে।
+*/
+
+const originalStartAutoScroll =
+  startAutoScroll;
+
+startAutoScroll = function() {
+
+  originalStartAutoScroll();
+
+  hideFullscreenControls();
+
+};
+
+
+/*
+  Auto Scroll বন্ধ হলে controls আবার দেখা যাবে।
+*/
+
+const originalStopAutoScroll =
+  stopAutoScroll;
+
+stopAutoScroll = function(resetButton = true) {
+
+  originalStopAutoScroll(resetButton);
+
+  showFullscreenControls();
+
+};
+
+
+/*
+  Fullscreen থেকে বের হলে controls অবশ্যই
+  আবার দেখা যাবে।
+*/
+
+document.addEventListener(
+  "fullscreenchange",
+  function() {
+
+    if (!document.fullscreenElement) {
+
+      showFullscreenControls();
+
+    } else if (isScrolling) {
+
+      hideFullscreenControls();
+
+    }
+
+  }
+);
