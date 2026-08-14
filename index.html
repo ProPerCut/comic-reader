@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Comic Reader & Auto Scroller</title>
   <link rel="stylesheet" href="style.css">
-  <!-- JSZip Library for reading ZIP/CBZ comic files -->
+  <!-- JSZip Library for CBZ / ZIP files -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
@@ -15,11 +15,11 @@
     <div class="brand">📖 Comic Reader</div>
     
     <div class="controls">
-      <!-- File Loader -->
+      <!-- File Loader (No strict accept filter so ALL files show up) -->
       <label for="file-input" class="btn">
-        📁 ফাইল সিলেক্ট করুন (CBZ / ZIP / Images)
+        📁 ফাইল সিলেক্ট করুন (.cbr / .cbz / .zip / Images)
       </label>
-      <input type="file" id="file-input" accept=".cbz,.zip,image/*" multiple style="display:none;">
+      <input type="file" id="file-input" multiple style="display:none;">
 
       <!-- Auto Scroll Controls -->
       <div class="scroll-controls">
@@ -34,8 +34,8 @@
   <!-- Comic Display Container -->
   <main id="reader-container">
     <div id="placeholder">
-      <h2>কোনো কমিক ফাইল বা ছবি বেছে নিন</h2>
-      <p>আপনার কম্পিউটারের .cbz, .zip অথবা সব ছবি একসাথে সিলেক্ট করে ওপেন করুন।</p>
+      <h2>কমিক ফাইল ড্রপ করুন অথবা উপরে ক্লিক করে সিলেক্ট করুন</h2>
+      <p>আপনার কম্পিউটারের যেকোনো .cbz, .cbr, .zip অথবা ছবির ফোল্ডার সিলেক্ট বা Drag & Drop করুন।</p>
     </div>
     <div id="pages-list"></div>
   </main>
