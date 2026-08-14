@@ -532,3 +532,7 @@ body.reader-fullscreen #reader-container {
 body.reader-fullscreen #mobile-controls {
   display: flex;
 }
+/* Fullscreen + Auto Scroll: hide controls */
+body.reader-fullscreen.controls-hidden #mobile-controls {
+  display: none !important;
+}
