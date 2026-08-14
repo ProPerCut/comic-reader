@@ -3,43 +3,194 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Comic Reader & Auto Scroller</title>
+
+  <title>Comic Reader</title>
+
   <link rel="stylesheet" href="style.css">
-  <!-- JSZip Library for CBZ / ZIP files -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- Browser archive reader: ZIP / CBZ / RAR / CBR -->
+  <script src="https://xenova.github.io/unarchiver.js/dist/unarchiver.min.js"></script>
+
+  <!-- PDF Reader -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
 </head>
+
 <body>
 
-  <!-- Top Navigation & Control Bar -->
-  <header class="control-bar">
-    <div class="brand">📖 Comic Reader</div>
-    
-    <div class="controls">
-      <!-- File Loader (No strict accept filter so ALL files show up) -->
-      <label for="file-input" class="btn">
-        📁 ফাইল সিলেক্ট করুন (.cbr / .cbz / .zip / Images)
-      </label>
-      <input type="file" id="file-input" multiple style="display:none;">
+  <!-- =========================
+       TOP CONTROL BAR
+  ========================== -->
 
-      <!-- Auto Scroll Controls -->
-      <div class="scroll-controls">
-        <button id="scroll-toggle" class="btn btn-toggle">▶ অটো-স্ক্রোল শুরু</button>
-        <label for="speed-range">স্পিড:</label>
-        <input type="range" id="speed-range" min="1" max="10" value="3">
-        <span id="speed-val">3x</span>
-      </div>
+  <header class="control-bar">
+
+    <div class="brand">
+      📖 Comic Reader
     </div>
+
+    <div class="controls">
+
+      <!-- Comic File -->
+      <label for="file-input" class="btn file-btn">
+        📁 Comic খুলুন
+      </label>
+
+      <input
+        type="file"
+        id="file-input"
+        multiple
+        accept=".cbz,.cbr,.zip,.rar,.pdf,.jpg,.jpeg,.png,.webp,.gif"
+        hidden
+      >
+
+      <!-- Image Folder -->
+      <label for="folder-input" class="btn">
+        📂 Folder
+      </label>
+
+      <input
+        type="file"
+        id="folder-input"
+        webkitdirectory
+        directory
+        multiple
+        accept="image/*"
+        hidden
+      >
+
+      <!-- Auto Scroll -->
+      <button id="scroll-toggle" class="btn auto-btn">
+        ▶ Auto Scroll
+      </button>
+
+      <!-- Speed -->
+      <div class="speed-box">
+
+        <span>Speed</span>
+
+        <input
+          type="range"
+          id="speed-range"
+          min="10"
+          max="1000"
+          value="150"
+          step="10"
+        >
+
+        <span id="speed-val">150</span>
+
+        <span>px/s</span>
+
+      </div>
+
+      <!-- Zoom -->
+      <button id="zoom-out" class="btn small-btn">
+        −
+      </button>
+
+      <span id="zoom-val">
+        100%
+      </span>
+
+      <button id="zoom-in" class="btn small-btn">
+        +
+      </button>
+
+      <!-- Fit Width -->
+      <button id="fit-width" class="btn">
+        ↔ Fit
+      </button>
+
+      <!-- Fullscreen -->
+      <button id="fullscreen-btn" class="btn">
+        ⛶
+      </button>
+
+    </div>
+
   </header>
 
-  <!-- Comic Display Container -->
+
+  <!-- =========================
+       STATUS BAR
+  ========================== -->
+
+  <div id="status-bar">
+
+    <span id="status-text">
+      কোনো Comic খোলা হয়নি
+    </span>
+
+    <span id="page-count">
+      0 pages
+    </span>
+
+  </div>
+
+
+  <!-- =========================
+       READER
+  ========================== -->
+
   <main id="reader-container">
-    <div id="placeholder">
-      <h2>কমিক ফাইল ড্রপ করুন অথবা উপরে ক্লিক করে সিলেক্ট করুন</h2>
-      <p>আপনার কম্পিউটারের যেকোনো .cbz, .cbr, .zip অথবা ছবির ফোল্ডার সিলেক্ট বা Drag & Drop করুন।</p>
-    </div>
+
+    <section id="placeholder">
+
+      <div class="welcome-icon">
+        📖
+      </div>
+
+      <h1>Comic Reader</h1>
+
+      <p>
+        CBZ, CBR, ZIP, PDF অথবা Image খুলে পড়ুন
+      </p>
+
+      <p class="small-help">
+        উপরের <b>Comic খুলুন</b> button চাপুন
+        অথবা Comic file এখানে Drag & Drop করুন।
+      </p>
+
+    </section>
+
+
     <div id="pages-list"></div>
+
   </main>
 
+
+  <!-- =========================
+       BOTTOM MOBILE CONTROLS
+  ========================== -->
+
+  <div id="mobile-controls">
+
+    <button id="mobile-scroll" class="mobile-btn">
+      ▶
+    </button>
+
+    <input
+      type="range"
+      id="mobile-speed"
+      min="10"
+      max="1000"
+      value="150"
+      step="10"
+    >
+
+    <button id="mobile-zoom-out" class="mobile-btn">
+      −
+    </button>
+
+    <button id="mobile-zoom-in" class="mobile-btn">
+      +
+    </button>
+
+  </div>
+
+
+  <!-- JavaScript -->
   <script src="script.js"></script>
+
 </body>
 </html>
