@@ -536,3 +536,207 @@ body.reader-fullscreen #mobile-controls {
 body.reader-fullscreen.controls-hidden #mobile-controls {
   display: none !important;
 }
+/* =========================================================
+   CUSTOM FULLSCREEN SCROLLBAR
+========================================================= */
+
+/* Hide browser's native scrollbar ONLY in fullscreen */
+body.reader-fullscreen {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body.reader-fullscreen::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+
+/* Custom scrollbar track */
+#custom-scrollbar {
+
+  position: fixed;
+
+  top: 8px;
+  right: 3px;
+  bottom: 8px;
+
+  width: 14px;
+
+  z-index: 999999;
+
+  display: none;
+
+  pointer-events: none;
+}
+
+
+/* Small invisible hover area */
+#custom-scrollbar::before {
+
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  right: -8px;
+
+  width: 30px;
+  height: 100%;
+
+  pointer-events: auto;
+}
+
+
+/* Actual track */
+#custom-scrollbar-track {
+
+  position: absolute;
+
+  top: 0;
+  right: 2px;
+
+  width: 5px;
+  height: 100%;
+
+  background: rgba(255,255,255,0.12);
+
+  border-radius: 10px;
+
+  opacity: 0;
+
+  transition: opacity 0.2s ease;
+
+  pointer-events: auto;
+}
+
+
+/* Scrollbar thumb */
+#custom-scrollbar-thumb {
+
+  position: absolute;
+
+  top: 0;
+  right: 0;
+
+  width: 5px;
+
+  min-height: 45px;
+
+  background: rgba(255,255,255,0.55);
+
+  border-radius: 10px;
+
+  cursor: grab;
+
+  transition:
+    width 0.15s ease,
+    background 0.15s ease;
+
+  pointer-events: auto;
+}
+
+
+/* Hover */
+#custom-scrollbar:hover #custom-scrollbar-track,
+#custom-scrollbar.visible #custom-scrollbar-track {
+
+  opacity: 1;
+
+}
+
+
+#custom-scrollbar:hover
+#custom-scrollbar-thumb {
+
+  width: 7px;
+
+  background: rgba(255,255,255,0.85);
+
+}
+
+
+#custom-scrollbar-thumb.dragging {
+
+  cursor: grabbing;
+
+  width: 8px;
+
+  background: #ffffff;
+
+}
+
+
+/* Page number tooltip */
+#scroll-page-indicator {
+
+  position: fixed;
+
+  right: 25px;
+
+  padding: 7px 11px;
+
+  background: rgba(15,15,15,0.92);
+
+  color: white;
+
+  font-size: 13px;
+
+  font-weight: bold;
+
+  border: 1px solid rgba(255,255,255,0.18);
+
+  border-radius: 7px;
+
+  white-space: nowrap;
+
+  opacity: 0;
+
+  transform: translateY(-50%);
+
+  transition: opacity 0.15s ease;
+
+  pointer-events: none;
+
+  z-index: 1000000;
+
+}
+
+
+/* Show page indicator */
+#scroll-page-indicator.show {
+
+  opacity: 1;
+
+}
+
+
+/* Don't show custom scrollbar outside fullscreen */
+body:not(.reader-fullscreen)
+#custom-scrollbar {
+
+  display: none !important;
+
+}
+
+
+/* Mobile */
+@media (max-width: 650px) {
+
+  #custom-scrollbar {
+
+    right: 2px;
+
+    width: 12px;
+
+  }
+
+  #scroll-page-indicator {
+
+    right: 22px;
+
+    font-size: 12px;
+
+  }
+
+}
