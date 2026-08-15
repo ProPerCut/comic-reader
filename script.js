@@ -11,7 +11,20 @@
    - PNG
    - WEBP
    - GIF
+   - BMP
+   - AVIF
    - Image folders
+
+   Features:
+   - Auto Scroll
+   - Adjustable Scroll Speed
+   - Zoom In / Out
+   - Fit Width
+   - Fullscreen
+   - Fullscreen Auto-Hide Controls
+   - Custom Fullscreen Scrollbar
+   - Page Number while dragging scrollbar
+   - Keyboard Shortcuts
 ========================================================= */
 
 
@@ -19,31 +32,59 @@
    ELEMENTS
 ========================================================= */
 
-const fileInput = document.getElementById("file-input");
-const folderInput = document.getElementById("folder-input");
+const fileInput =
+  document.getElementById("file-input");
 
-const pagesList = document.getElementById("pages-list");
-const placeholder = document.getElementById("placeholder");
+const folderInput =
+  document.getElementById("folder-input");
 
-const scrollToggle = document.getElementById("scroll-toggle");
+const pagesList =
+  document.getElementById("pages-list");
 
-const speedRange = document.getElementById("speed-range");
-const speedVal = document.getElementById("speed-val");
+const placeholder =
+  document.getElementById("placeholder");
 
-const zoomIn = document.getElementById("zoom-in");
-const zoomOut = document.getElementById("zoom-out");
-const zoomVal = document.getElementById("zoom-val");
+const scrollToggle =
+  document.getElementById("scroll-toggle");
 
-const fitWidth = document.getElementById("fit-width");
-const fullscreenBtn = document.getElementById("fullscreen-btn");
+const speedRange =
+  document.getElementById("speed-range");
 
-const statusText = document.getElementById("status-text");
-const pageCount = document.getElementById("page-count");
+const speedVal =
+  document.getElementById("speed-val");
 
-const mobileScroll = document.getElementById("mobile-scroll");
-const mobileSpeed = document.getElementById("mobile-speed");
-const mobileZoomIn = document.getElementById("mobile-zoom-in");
-const mobileZoomOut = document.getElementById("mobile-zoom-out");
+const zoomIn =
+  document.getElementById("zoom-in");
+
+const zoomOut =
+  document.getElementById("zoom-out");
+
+const zoomVal =
+  document.getElementById("zoom-val");
+
+const fitWidth =
+  document.getElementById("fit-width");
+
+const fullscreenBtn =
+  document.getElementById("fullscreen-btn");
+
+const statusText =
+  document.getElementById("status-text");
+
+const pageCount =
+  document.getElementById("page-count");
+
+const mobileScroll =
+  document.getElementById("mobile-scroll");
+
+const mobileSpeed =
+  document.getElementById("mobile-speed");
+
+const mobileZoomIn =
+  document.getElementById("mobile-zoom-in");
+
+const mobileZoomOut =
+  document.getElementById("mobile-zoom-out");
 
 
 /* =========================================================
@@ -114,7 +155,12 @@ function naturalSort(a, b) {
 
 function setStatus(message) {
 
-  statusText.textContent = message;
+  if (statusText) {
+
+    statusText.textContent =
+      message;
+
+  }
 
 }
 
@@ -123,17 +169,30 @@ function setStatus(message) {
    LOADING SCREEN
 ========================================================= */
 
-function showLoading(message = "Comic প্রসেস হচ্ছে...") {
+function showLoading(
+  message = "Comic প্রসেস হচ্ছে..."
+) {
 
   pagesList.innerHTML = "";
 
-  placeholder.style.display = "block";
+  placeholder.style.display =
+    "block";
 
   placeholder.innerHTML = `
     <div class="loading-box">
-      <div class="loading-icon">⏳</div>
-      <h2>${message}</h2>
-      <p>একটু অপেক্ষা করুন...</p>
+
+      <div class="loading-icon">
+        ⏳
+      </div>
+
+      <h2>
+        ${message}
+      </h2>
+
+      <p>
+        একটু অপেক্ষা করুন...
+      </p>
+
     </div>
   `;
 
@@ -148,18 +207,29 @@ function showError(message) {
 
   pagesList.innerHTML = "";
 
-  placeholder.style.display = "block";
+  placeholder.style.display =
+    "block";
 
   placeholder.innerHTML = `
     <div class="error-box">
-      <h2>❌ Comic খোলা যায়নি</h2>
+
+      <h2>
+        ❌ Comic খোলা যায়নি
+      </h2>
+
       <br>
-      <p>${message}</p>
-      <br>
+
       <p>
-        সাধারণত damaged, password-protected বা unsupported
-        file হলে এমন হতে পারে।
+        ${message}
       </p>
+
+      <br>
+
+      <p>
+        সাধারণত damaged, password-protected
+        বা unsupported file হলে এমন হতে পারে।
+      </p>
+
     </div>
   `;
 
@@ -172,10 +242,14 @@ function showError(message) {
 
 function clearObjectURLs() {
 
-  for (const url of currentObjectURLs) {
+  for (
+    const url of currentObjectURLs
+  ) {
 
     try {
+
       URL.revokeObjectURL(url);
+
     } catch (e) {}
 
   }
@@ -191,7 +265,8 @@ function clearObjectURLs() {
 
 function createObjectURL(file) {
 
-  const url = URL.createObjectURL(file);
+  const url =
+    URL.createObjectURL(file);
 
   currentObjectURLs.push(url);
 
@@ -204,58 +279,79 @@ function createObjectURL(file) {
    FILE INPUT
 ========================================================= */
 
-fileInput.addEventListener("change", async function(event) {
+fileInput.addEventListener(
+  "change",
+  async function(event) {
 
-  const files = Array.from(event.target.files || []);
+    const files =
+      Array.from(
+        event.target.files || []
+      );
 
-  if (!files.length) return;
+    if (!files.length) return;
 
-  await processFiles(files);
+    await processFiles(files);
 
-  fileInput.value = "";
+    fileInput.value = "";
 
-});
+  }
+);
 
 
 /* =========================================================
    FOLDER INPUT
 ========================================================= */
 
-folderInput.addEventListener("change", async function(event) {
+folderInput.addEventListener(
+  "change",
+  async function(event) {
 
-  const files = Array.from(event.target.files || []);
+    const files =
+      Array.from(
+        event.target.files || []
+      );
 
-  if (!files.length) return;
+    if (!files.length) return;
 
-  await processImageFiles(files);
+    await processImageFiles(files);
 
-  folderInput.value = "";
+    folderInput.value = "";
 
-});
+  }
+);
 
 
 /* =========================================================
    DRAG & DROP
 ========================================================= */
 
-document.addEventListener("dragover", function(event) {
+document.addEventListener(
+  "dragover",
+  function(event) {
 
-  event.preventDefault();
+    event.preventDefault();
 
-});
+  }
+);
 
 
-document.addEventListener("drop", async function(event) {
+document.addEventListener(
+  "drop",
+  async function(event) {
 
-  event.preventDefault();
+    event.preventDefault();
 
-  const files = Array.from(event.dataTransfer.files || []);
+    const files =
+      Array.from(
+        event.dataTransfer.files || []
+      );
 
-  if (!files.length) return;
+    if (!files.length) return;
 
-  await processFiles(files);
+    await processFiles(files);
 
-});
+  }
+);
 
 
 /* =========================================================
@@ -264,27 +360,48 @@ document.addEventListener("drop", async function(event) {
 
 async function processFiles(files) {
 
-  const token = ++loadToken;
+  const token =
+    ++loadToken;
+
 
   stopAutoScroll();
 
+
   clearObjectURLs();
 
-  currentArchive = null;
 
-  pagesList.innerHTML = "";
+  currentArchive =
+    null;
 
-  pageCount.textContent = "0 pages";
 
-  const firstFile = files[0];
+  pagesList.innerHTML =
+    "";
+
+
+  pageCount.textContent =
+    "0 pages";
+
+
+  const firstFile =
+    files[0];
+
 
   if (!firstFile) return;
 
-  const fileName = firstFile.name.toLowerCase();
 
-  setStatus("Loading: " + firstFile.name);
+  const fileName =
+    firstFile.name.toLowerCase();
 
-  showLoading("Comic প্রস্তুত হচ্ছে...");
+
+  setStatus(
+    "Loading: " +
+    firstFile.name
+  );
+
+
+  showLoading(
+    "Comic প্রস্তুত হচ্ছে..."
+  );
 
 
   try {
@@ -293,11 +410,17 @@ async function processFiles(files) {
        PDF
     ----------------------------------------- */
 
-    if (fileName.endsWith(".pdf")) {
+    if (
+      fileName.endsWith(".pdf")
+    ) {
 
-      await processPDF(firstFile, token);
+      await processPDF(
+        firstFile,
+        token
+      );
 
       return;
+
     }
 
 
@@ -313,9 +436,13 @@ async function processFiles(files) {
       fileName.endsWith(".rar")
     ) {
 
-      await processArchive(firstFile, token);
+      await processArchive(
+        firstFile,
+        token
+      );
 
       return;
+
     }
 
 
@@ -323,21 +450,30 @@ async function processFiles(files) {
        DIRECT IMAGES
     ----------------------------------------- */
 
-    const imageFiles = files.filter(file => {
+    const imageFiles =
+      files.filter(
+        file => {
 
-      return (
-        file.type.startsWith("image/") ||
-        isImageFile(file.name)
+          return (
+            file.type.startsWith("image/") ||
+            isImageFile(file.name)
+          );
+
+        }
       );
 
-    });
 
+    if (
+      imageFiles.length > 0
+    ) {
 
-    if (imageFiles.length > 0) {
-
-      await processImageFiles(imageFiles, token);
+      await processImageFiles(
+        imageFiles,
+        token
+      );
 
       return;
+
     }
 
 
@@ -350,14 +486,25 @@ async function processFiles(files) {
 
     console.error(error);
 
-    if (token !== loadToken) return;
+
+    if (
+      token !== loadToken
+    ) {
+
+      return;
+
+    }
+
 
     showError(
       error.message ||
       "অজানা কারণে file load করা যায়নি।"
     );
 
-    setStatus("File load failed");
+
+    setStatus(
+      "File load failed"
+    );
 
   }
 
@@ -368,46 +515,82 @@ async function processFiles(files) {
    IMAGE FILE PROCESSOR
 ========================================================= */
 
-async function processImageFiles(files, token = loadToken) {
+async function processImageFiles(
+  files,
+  token = loadToken
+) {
 
   stopAutoScroll();
 
+
   clearObjectURLs();
 
-  pagesList.innerHTML = "";
 
-  const images = files
-    .filter(file =>
-      file.type.startsWith("image/") ||
-      isImageFile(file.name)
-    )
-    .sort(naturalSort);
+  pagesList.innerHTML =
+    "";
 
 
-  if (!images.length) {
+  const images =
+    files
+      .filter(
+        file =>
+          file.type.startsWith("image/") ||
+          isImageFile(file.name)
+      )
+      .sort(naturalSort);
 
-    showError("কোনো image পাওয়া যায়নি।");
+
+  if (
+    !images.length
+  ) {
+
+    showError(
+      "কোনো image পাওয়া যায়নি।"
+    );
 
     return;
+
   }
 
 
-  if (token !== loadToken) return;
+  if (
+    token !== loadToken
+  ) {
+
+    return;
+
+  }
 
 
-  placeholder.style.display = "none";
+  placeholder.style.display =
+    "none";
+
 
   setStatus(
-    images.length + "টি image পাওয়া গেছে"
+    images.length +
+    "টি image পাওয়া গেছে"
   );
 
+
   pageCount.textContent =
-    images.length + " pages";
+    images.length +
+    " pages";
 
 
-  for (let i = 0; i < images.length; i++) {
+  for (
+    let i = 0;
+    i < images.length;
+    i++
+  ) {
 
-    if (token !== loadToken) return;
+    if (
+      token !== loadToken
+    ) {
+
+      return;
+
+    }
+
 
     addImagePage(
       images[i],
@@ -419,6 +602,9 @@ async function processImageFiles(files, token = loadToken) {
 
   applyZoom();
 
+
+  updateCustomScrollbar();
+
 }
 
 
@@ -427,9 +613,15 @@ async function processImageFiles(files, token = loadToken) {
    Uses Unarchiver.js
 ========================================================= */
 
-async function processArchive(file, token) {
+async function processArchive(
+  file,
+  token
+) {
 
-  if (typeof Unarchiver === "undefined") {
+  if (
+    typeof Unarchiver ===
+    "undefined"
+  ) {
 
     throw new Error(
       "Archive engine load হয়নি। Internet connection check করে আবার চেষ্টা করুন।"
@@ -439,7 +631,8 @@ async function processArchive(file, token) {
 
 
   setStatus(
-    "Archive খোলা হচ্ছে: " + file.name
+    "Archive খোলা হচ্ছে: " +
+    file.name
   );
 
 
@@ -447,7 +640,12 @@ async function processArchive(file, token) {
 
   try {
 
-    await Unarchiver.load(["zip", "rar"]);
+    await Unarchiver.load(
+      [
+        "zip",
+        "rar"
+      ]
+    );
 
   } catch (error) {
 
@@ -459,42 +657,58 @@ async function processArchive(file, token) {
   }
 
 
-  if (token !== loadToken) return;
+  if (
+    token !== loadToken
+  ) {
+
+    return;
+
+  }
 
 
   /* Open archive */
 
   const archive =
-    await Unarchiver.open(file);
+    await Unarchiver.open(
+      file
+    );
 
 
-  currentArchive = archive;
+  currentArchive =
+    archive;
 
 
-  const entries = archive.entries
-    .filter(entry => {
+  const entries =
+    archive.entries
+      .filter(
+        entry => {
 
-      return (
-        entry.is_file &&
-        isImageFile(entry.name)
-      );
+          return (
+            entry.is_file &&
+            isImageFile(entry.name)
+          );
 
-    })
-    .sort((a, b) => {
+        }
+      )
+      .sort(
+        (a, b) => {
 
-      return a.name.localeCompare(
-        b.name,
-        undefined,
-        {
-          numeric: true,
-          sensitivity: "base"
+          return a.name.localeCompare(
+            b.name,
+            undefined,
+            {
+              numeric: true,
+              sensitivity: "base"
+            }
+          );
+
         }
       );
 
-    });
 
-
-  if (!entries.length) {
+  if (
+    !entries.length
+  ) {
 
     throw new Error(
       "Comic archive-এর ভিতরে কোনো supported image পাওয়া যায়নি।"
@@ -503,7 +717,8 @@ async function processArchive(file, token) {
   }
 
 
-  placeholder.style.display = "none";
+  placeholder.style.display =
+    "none";
 
 
   setStatus(
@@ -515,7 +730,8 @@ async function processArchive(file, token) {
 
 
   pageCount.textContent =
-    entries.length + " pages";
+    entries.length +
+    " pages";
 
 
   /* -----------------------------------------
@@ -523,9 +739,19 @@ async function processArchive(file, token) {
      This reduces memory pressure.
   ----------------------------------------- */
 
-  for (let i = 0; i < entries.length; i++) {
+  for (
+    let i = 0;
+    i < entries.length;
+    i++
+  ) {
 
-    if (token !== loadToken) return;
+    if (
+      token !== loadToken
+    ) {
+
+      return;
+
+    }
 
 
     setStatus(
@@ -541,11 +767,19 @@ async function processArchive(file, token) {
       await entries[i].read();
 
 
-    if (token !== loadToken) return;
+    if (
+      token !== loadToken
+    ) {
+
+      return;
+
+    }
 
 
     const url =
-      createObjectURL(entryFile);
+      createObjectURL(
+        entryFile
+      );
 
 
     addImagePageFromURL(
@@ -556,14 +790,20 @@ async function processArchive(file, token) {
 
 
     /*
-      Browser-কে মাঝে মাঝে render করার সুযোগ দেওয়া হয়।
-      বড় comic-এর ক্ষেত্রে UI freeze কম হবে।
+      Browser-কে মাঝে মাঝে render করার
+      সুযোগ দেওয়া হয়।
     */
 
-    if (i % 3 === 0) {
+    if (
+      i % 3 === 0
+    ) {
 
       await new Promise(
-        resolve => setTimeout(resolve, 0)
+        resolve =>
+          setTimeout(
+            resolve,
+            0
+          )
       );
 
     }
@@ -581,6 +821,9 @@ async function processArchive(file, token) {
 
   applyZoom();
 
+
+  updateCustomScrollbar();
+
 }
 
 
@@ -588,9 +831,16 @@ async function processArchive(file, token) {
    ADD IMAGE PAGE FROM FILE
 ========================================================= */
 
-function addImagePage(file, pageNumber) {
+function addImagePage(
+  file,
+  pageNumber
+) {
 
-  const url = createObjectURL(file);
+  const url =
+    createObjectURL(
+      file
+    );
+
 
   addImagePageFromURL(
     url,
@@ -612,14 +862,20 @@ function addImagePageFromURL(
 ) {
 
   const wrapper =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
+
 
   wrapper.className =
     "page-wrapper";
 
 
   const img =
-    document.createElement("img");
+    document.createElement(
+      "img"
+    );
+
 
   img.className =
     "page-image";
@@ -634,7 +890,8 @@ function addImagePageFromURL(
 
 
   img.alt =
-    "Comic page " + pageNumber;
+    "Comic page " +
+    pageNumber;
 
 
   img.src =
@@ -649,9 +906,14 @@ function addImagePageFromURL(
     fileName;
 
 
-  wrapper.appendChild(img);
+  wrapper.appendChild(
+    img
+  );
 
-  pagesList.appendChild(wrapper);
+
+  pagesList.appendChild(
+    wrapper
+  );
 
 }
 
@@ -660,9 +922,15 @@ function addImagePageFromURL(
    PDF PROCESSOR
 ========================================================= */
 
-async function processPDF(file, token) {
+async function processPDF(
+  file,
+  token
+) {
 
-  if (typeof pdfjsLib === "undefined") {
+  if (
+    typeof pdfjsLib ===
+    "undefined"
+  ) {
 
     throw new Error(
       "PDF Reader library load হয়নি। Internet connection check করুন।"
@@ -680,7 +948,13 @@ async function processPDF(file, token) {
     await file.arrayBuffer();
 
 
-  if (token !== loadToken) return;
+  if (
+    token !== loadToken
+  ) {
+
+    return;
+
+  }
 
 
   const pdf =
@@ -691,14 +965,22 @@ async function processPDF(file, token) {
       .promise;
 
 
-  if (token !== loadToken) return;
+  if (
+    token !== loadToken
+  ) {
+
+    return;
+
+  }
 
 
-  placeholder.style.display = "none";
+  placeholder.style.display =
+    "none";
 
 
   pageCount.textContent =
-    pdf.numPages + " pages";
+    pdf.numPages +
+    " pages";
 
 
   setStatus(
@@ -719,7 +1001,13 @@ async function processPDF(file, token) {
     pageNumber++
   ) {
 
-    if (token !== loadToken) return;
+    if (
+      token !== loadToken
+    ) {
+
+      return;
+
+    }
 
 
     setStatus(
@@ -732,12 +1020,13 @@ async function processPDF(file, token) {
 
 
     const page =
-      await pdf.getPage(pageNumber);
+      await pdf.getPage(
+        pageNumber
+      );
 
 
     /*
-      1.5 gives good quality while keeping
-      memory usage reasonable.
+      Base viewport
     */
 
     const baseViewport =
@@ -764,7 +1053,10 @@ async function processPDF(file, token) {
 
     scale =
       Math.min(
-        Math.max(scale, 1),
+        Math.max(
+          scale,
+          1
+        ),
         2
       );
 
@@ -776,40 +1068,58 @@ async function processPDF(file, token) {
 
 
     const wrapper =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
+
 
     wrapper.className =
       "page-wrapper";
 
 
     const canvas =
-      document.createElement("canvas");
+      document.createElement(
+        "canvas"
+      );
+
 
     canvas.className =
       "pdf-page";
 
 
     canvas.width =
-      Math.floor(viewport.width);
+      Math.floor(
+        viewport.width
+      );
 
 
     canvas.height =
-      Math.floor(viewport.height);
+      Math.floor(
+        viewport.height
+      );
 
 
     canvas.dataset.page =
       pageNumber;
 
 
-    wrapper.appendChild(canvas);
+    wrapper.appendChild(
+      canvas
+    );
 
-    pagesList.appendChild(wrapper);
+
+    pagesList.appendChild(
+      wrapper
+    );
 
 
     const context =
-      canvas.getContext("2d", {
-        alpha: false
-      });
+      canvas.getContext(
+        "2d",
+        {
+          alpha: false
+        }
+      );
 
 
     await page.render({
@@ -822,10 +1132,16 @@ async function processPDF(file, token) {
       Allow browser to breathe
     */
 
-    if (pageNumber % 2 === 0) {
+    if (
+      pageNumber % 2 === 0
+    ) {
 
       await new Promise(
-        resolve => setTimeout(resolve, 0)
+        resolve =>
+          setTimeout(
+            resolve,
+            0
+          )
       );
 
     }
@@ -837,6 +1153,12 @@ async function processPDF(file, token) {
     file.name +
     " • PDF ready"
   );
+
+
+  applyZoom();
+
+
+  updateCustomScrollbar();
 
 }
 
@@ -891,30 +1213,58 @@ function startAutoScroll() {
   stopAutoScroll(false);
 
 
-  isScrolling = true;
+  isScrolling =
+    true;
 
 
   scrollToggle.textContent =
     "⏸ Stop Scroll";
 
 
-  scrollToggle.classList.add("active");
+  scrollToggle.classList.add(
+    "active"
+  );
 
 
   mobileScroll.textContent =
     "⏸";
 
 
-  let lastTime = performance.now();
+  /*
+    NEW:
+    Fullscreen + Auto Scroll
+    হলে controls hide হবে।
+  */
+
+  if (
+    document.fullscreenElement
+  ) {
+
+    hideFullscreenControls();
+
+  }
 
 
-  function scrollFrame(currentTime) {
+  let lastTime =
+    performance.now();
 
-    if (!isScrolling) return;
+
+  function scrollFrame(
+    currentTime
+  ) {
+
+    if (
+      !isScrolling
+    ) {
+
+      return;
+
+    }
 
 
     const delta =
-      currentTime - lastTime;
+      currentTime -
+      lastTime;
 
 
     lastTime =
@@ -923,11 +1273,15 @@ function startAutoScroll() {
 
     /*
       Speed is pixels per second.
-      This gives smoother scrolling than setInterval.
+      This gives smoother scrolling
+      than setInterval.
     */
 
     const pixels =
-      (scrollSpeed * delta) / 1000;
+      (
+        scrollSpeed *
+        delta
+      ) / 1000;
 
 
     window.scrollBy(
@@ -939,10 +1293,16 @@ function startAutoScroll() {
     const bottomReached =
       window.innerHeight +
       window.scrollY >=
-      document.documentElement.scrollHeight - 2;
+      document.documentElement.scrollHeight -
+      2;
 
 
-    if (bottomReached) {
+    updateCustomScrollbar();
+
+
+    if (
+      bottomReached
+    ) {
 
       stopAutoScroll();
 
@@ -975,33 +1335,50 @@ function stopAutoScroll(
   resetButton = true
 ) {
 
-  isScrolling = false;
+  isScrolling =
+    false;
 
 
-  if (animationFrame !== null) {
+  if (
+    animationFrame !== null
+  ) {
 
     cancelAnimationFrame(
       animationFrame
     );
 
-    animationFrame = null;
+
+    animationFrame =
+      null;
 
   }
 
 
-  if (resetButton) {
+  if (
+    resetButton
+  ) {
 
     scrollToggle.textContent =
       "▶ Auto Scroll";
+
 
     scrollToggle.classList.remove(
       "active"
     );
 
+
     mobileScroll.textContent =
       "▶";
 
   }
+
+
+  /*
+    Auto Scroll বন্ধ হলে
+    controls আবার দেখা যাবে।
+  */
+
+  showFullscreenControls();
 
 }
 
@@ -1010,7 +1387,9 @@ function stopAutoScroll(
    SPEED
 ========================================================= */
 
-function setScrollSpeed(value) {
+function setScrollSpeed(
+  value
+) {
 
   scrollSpeed =
     Number(value);
@@ -1028,7 +1407,9 @@ function setScrollSpeed(value) {
     scrollSpeed;
 
 
-  if (isScrolling) {
+  if (
+    isScrolling
+  ) {
 
     stopAutoScroll();
 
@@ -1082,10 +1463,17 @@ function updateZoom() {
   zoomVal.textContent =
     Math.round(
       zoomLevel * 100
-    ) + "%";
+    ) +
+    "%";
 
 
   applyZoom();
+
+
+  setTimeout(
+    updateCustomScrollbar,
+    50
+  );
 
 }
 
@@ -1109,30 +1497,39 @@ function applyZoom() {
 
 
   const all =
-    [...images, ...canvases];
+    [
+      ...images,
+      ...canvases
+    ];
 
 
-  all.forEach(element => {
+  all.forEach(
+    element => {
 
-    if (fitWidthMode) {
+      if (
+        fitWidthMode
+      ) {
 
-      element.style.width =
-        "100%";
+        element.style.width =
+          "100%";
 
-      element.style.maxWidth =
-        "100%";
 
-    } else {
+        element.style.maxWidth =
+          "100%";
 
-      element.style.width =
-        `${zoomLevel * 100}%`;
+      } else {
 
-      element.style.maxWidth =
-        "none";
+        element.style.width =
+          `${zoomLevel * 100}%`;
+
+
+        element.style.maxWidth =
+          "none";
+
+      }
 
     }
-
-  });
+  );
 
 }
 
@@ -1143,9 +1540,13 @@ function applyZoom() {
 
 function increaseZoom() {
 
-  fitWidthMode = false;
+  fitWidthMode =
+    false;
 
-  zoomLevel += 0.1;
+
+  zoomLevel +=
+    0.1;
+
 
   updateZoom();
 
@@ -1170,9 +1571,13 @@ mobileZoomIn.addEventListener(
 
 function decreaseZoom() {
 
-  fitWidthMode = false;
+  fitWidthMode =
+    false;
 
-  zoomLevel -= 0.1;
+
+  zoomLevel -=
+    0.1;
+
 
   updateZoom();
 
@@ -1199,9 +1604,13 @@ fitWidth.addEventListener(
   "click",
   function() {
 
-    fitWidthMode = true;
+    fitWidthMode =
+      true;
 
-    zoomLevel = 1;
+
+    zoomLevel =
+      1;
+
 
     updateZoom();
 
@@ -1223,13 +1632,21 @@ async function toggleFullscreen() {
 
   try {
 
-    if (!document.fullscreenElement) {
+    if (
+      !document.fullscreenElement
+    ) {
 
-      await document.documentElement.requestFullscreen();
+      await document.documentElement
+        .requestFullscreen();
+
 
       document.body.classList.add(
         "reader-fullscreen"
       );
+
+
+      updateCustomScrollbar();
+
 
     } else {
 
@@ -1249,21 +1666,55 @@ async function toggleFullscreen() {
 }
 
 
+/* =========================================================
+   FULLSCREEN CHANGE
+========================================================= */
+
 document.addEventListener(
   "fullscreenchange",
   function() {
 
-    if (document.fullscreenElement) {
+    if (
+      document.fullscreenElement
+    ) {
 
       document.body.classList.add(
         "reader-fullscreen"
       );
+
+
+      createCustomScrollbar();
+
+
+      setTimeout(
+        function() {
+
+          updateCustomScrollbar();
+
+          if (
+            isScrolling
+          ) {
+
+            hideFullscreenControls();
+
+          }
+
+        },
+        100
+      );
+
 
     } else {
 
       document.body.classList.remove(
         "reader-fullscreen"
       );
+
+
+      showFullscreenControls();
+
+
+      hideCustomScrollbar();
 
     }
 
@@ -1361,29 +1812,642 @@ document.addEventListener(
 
 
 /* =========================================================
-   INITIAL STATUS
+   FULLSCREEN CONTROL AUTO-HIDE
 ========================================================= */
 
-setScrollSpeed(150);
+let controlHideTimer =
+  null;
 
-setStatus(
-  "কোনো Comic খোলা হয়নি"
-);
-/* =========================================================
-   FULLSCREEN AUTO-SCROLL CONTROL AUTO-HIDE
-========================================================= */
 
 /*
-  যখন fullscreen + auto scroll চালু হবে,
-  নিচের control bar automatically hide হবে।
+  Find all existing reader controls.
+  We don't change their normal appearance.
 */
+
+function getReaderControls() {
+
+  const controls = [];
+
+
+  const desktopControl =
+    document.querySelector(
+      ".control-bar"
+    );
+
+
+  const mobileControl =
+    document.querySelector(
+      "#mobile-controls"
+    );
+
+
+  if (
+    desktopControl
+  ) {
+
+    controls.push(
+      desktopControl
+    );
+
+  }
+
+
+  if (
+    mobileControl &&
+    mobileControl !== desktopControl
+  ) {
+
+    controls.push(
+      mobileControl
+    );
+
+  }
+
+
+  return controls;
+
+}
+
+
+/* =========================================================
+   HIDE CONTROLS
+========================================================= */
 
 function hideFullscreenControls() {
 
-  if (document.fullscreenElement && isScrolling) {
+  if (
+    !document.fullscreenElement ||
+    !isScrolling
+  ) {
 
-    document.body.classList.add(
-      "controls-hidden"
+    return;
+
+  }
+
+
+  const controls =
+    getReaderControls();
+
+
+  controls.forEach(
+    control => {
+
+      control.classList.add(
+        "controls-hidden"
+      );
+
+    }
+  );
+
+
+  clearTimeout(
+    controlHideTimer
+  );
+
+}
+
+
+/* =========================================================
+   SHOW CONTROLS
+========================================================= */
+
+function showFullscreenControls() {
+
+  const controls =
+    getReaderControls();
+
+
+  controls.forEach(
+    control => {
+
+      control.classList.remove(
+        "controls-hidden"
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   SCREEN CLICK = SHOW CONTROLS
+========================================================= */
+
+document.addEventListener(
+  "click",
+  function(event) {
+
+    if (
+      !document.fullscreenElement
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+      If controls are hidden and user clicks
+      the comic screen, show them again.
+    */
+
+    if (
+      isScrolling
+    ) {
+
+      const controls =
+        getReaderControls();
+
+
+      const areHidden =
+        controls.some(
+          control =>
+            control.classList.contains(
+              "controls-hidden"
+            )
+        );
+
+
+      if (
+        areHidden
+      ) {
+
+        showFullscreenControls();
+
+
+        /*
+          Hide again after a short time.
+          This keeps screen recording clean.
+        */
+
+        clearTimeout(
+          controlHideTimer
+        );
+
+
+        controlHideTimer =
+          setTimeout(
+            function() {
+
+              if (
+                document.fullscreenElement &&
+                isScrolling
+              ) {
+
+                hideFullscreenControls();
+
+              }
+
+            },
+            2500
+          );
+
+      }
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   CUSTOM SCROLLBAR
+========================================================= */
+
+let customScrollbar =
+  null;
+
+let customScrollbarTrack =
+  null;
+
+let customScrollbarThumb =
+  null;
+
+let scrollPageIndicator =
+  null;
+
+let scrollbarDragging =
+  false;
+
+let scrollbarDragOffset =
+  0;
+
+let scrollbarHideTimer =
+  null;
+
+
+/* =========================================================
+   CUSTOM SCROLLBAR CSS
+========================================================= */
+
+function injectScrollbarCSS() {
+
+  if (
+    document.getElementById(
+      "comic-custom-scrollbar-style"
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  const style =
+    document.createElement(
+      "style"
+    );
+
+
+  style.id =
+    "comic-custom-scrollbar-style";
+
+
+  style.textContent = `
+
+    /* -----------------------------------------
+       HIDE NATIVE SCROLLBAR IN FULLSCREEN
+    ----------------------------------------- */
+
+    body.reader-fullscreen {
+
+      scrollbar-width: none;
+
+      -ms-overflow-style: none;
+
+    }
+
+
+    body.reader-fullscreen::-webkit-scrollbar {
+
+      width: 0 !important;
+
+      height: 0 !important;
+
+      display: none !important;
+
+    }
+
+
+    /* -----------------------------------------
+       HIDE ORIGINAL CONTROLS
+    ----------------------------------------- */
+
+    body.reader-fullscreen
+    .controls-hidden {
+
+      opacity: 0 !important;
+
+      visibility: hidden !important;
+
+      pointer-events: none !important;
+
+      transform: translateY(10px) !important;
+
+    }
+
+
+    /* -----------------------------------------
+       CUSTOM SCROLLBAR
+    ----------------------------------------- */
+
+    #comic-custom-scrollbar {
+
+      position: fixed;
+
+      top: 0;
+
+      right: 0;
+
+      width: 28px;
+
+      height: 100vh;
+
+      z-index: 2147483640;
+
+      display: none;
+
+      pointer-events: none;
+
+    }
+
+
+    #comic-custom-scrollbar.active {
+
+      display: block;
+
+    }
+
+
+    /* -----------------------------------------
+       INVISIBLE MOUSE AREA
+    ----------------------------------------- */
+
+    #comic-custom-scrollbar::before {
+
+      content: "";
+
+      position: absolute;
+
+      top: 0;
+
+      right: 0;
+
+      width: 32px;
+
+      height: 100%;
+
+      pointer-events: auto;
+
+    }
+
+
+    /* -----------------------------------------
+       TRACK
+    ----------------------------------------- */
+
+    #comic-custom-scrollbar-track {
+
+      position: absolute;
+
+      top: 8px;
+
+      right: 5px;
+
+      width: 5px;
+
+      height: calc(100% - 16px);
+
+      border-radius: 10px;
+
+      background: rgba(
+        255,
+        255,
+        255,
+        0.12
+      );
+
+      opacity: 0;
+
+      transition:
+        opacity 0.18s ease;
+
+      pointer-events: auto;
+
+    }
+
+
+    #comic-custom-scrollbar.visible
+    #comic-custom-scrollbar-track {
+
+      opacity: 1;
+
+    }
+
+
+    /* -----------------------------------------
+       THUMB
+    ----------------------------------------- */
+
+    #comic-custom-scrollbar-thumb {
+
+      position: absolute;
+
+      top: 0;
+
+      right: 0;
+
+      width: 5px;
+
+      min-height: 45px;
+
+      border-radius: 10px;
+
+      background: rgba(
+        255,
+        255,
+        255,
+        0.62
+      );
+
+      cursor: grab;
+
+      transition:
+        width 0.12s ease,
+        background 0.12s ease;
+
+      pointer-events: auto;
+
+    }
+
+
+    #comic-custom-scrollbar-thumb:hover {
+
+      width: 7px;
+
+      background: rgba(
+        255,
+        255,
+        255,
+        0.9
+      );
+
+    }
+
+
+    #comic-custom-scrollbar-thumb.dragging {
+
+      width: 8px;
+
+      background: #ffffff;
+
+      cursor: grabbing;
+
+    }
+
+
+    /* -----------------------------------------
+       PAGE INDICATOR
+    ----------------------------------------- */
+
+    #comic-scroll-page-indicator {
+
+      position: fixed;
+
+      right: 35px;
+
+      padding: 7px 11px;
+
+      border-radius: 7px;
+
+      background: rgba(
+        15,
+        15,
+        15,
+        0.94
+      );
+
+      border: 1px solid rgba(
+        255,
+        255,
+        255,
+        0.18
+      );
+
+      color: #ffffff;
+
+      font-family:
+        Arial,
+        sans-serif;
+
+      font-size: 13px;
+
+      font-weight: bold;
+
+      white-space: nowrap;
+
+      opacity: 0;
+
+      transform:
+        translateY(-50%);
+
+      transition:
+        opacity 0.15s ease;
+
+      pointer-events: none;
+
+      z-index: 2147483641;
+
+    }
+
+
+    #comic-scroll-page-indicator.show {
+
+      opacity: 1;
+
+    }
+
+  `;
+
+
+  document.head.appendChild(
+    style
+  );
+
+}
+
+
+/* =========================================================
+   CREATE CUSTOM SCROLLBAR
+========================================================= */
+
+function createCustomScrollbar() {
+
+  injectScrollbarCSS();
+
+
+  if (
+    customScrollbar
+  ) {
+
+    return;
+
+  }
+
+
+  customScrollbar =
+    document.createElement(
+      "div"
+    );
+
+
+  customScrollbar.id =
+    "comic-custom-scrollbar";
+
+
+  customScrollbarTrack =
+    document.createElement(
+      "div"
+    );
+
+
+  customScrollbarTrack.id =
+    "comic-custom-scrollbar-track";
+
+
+  customScrollbarThumb =
+    document.createElement(
+      "div"
+    );
+
+
+  customScrollbarThumb.id =
+    "comic-custom-scrollbar-thumb";
+
+
+  scrollPageIndicator =
+    document.createElement(
+      "div"
+    );
+
+
+  scrollPageIndicator.id =
+    "comic-scroll-page-indicator";
+
+
+  customScrollbarTrack.appendChild(
+    customScrollbarThumb
+  );
+
+
+  customScrollbar.appendChild(
+    customScrollbarTrack
+  );
+
+
+  document.body.appendChild(
+    customScrollbar
+  );
+
+
+  document.body.appendChild(
+    scrollPageIndicator
+  );
+
+
+  setupCustomScrollbarEvents();
+
+}
+
+
+/* =========================================================
+   HIDE CUSTOM SCROLLBAR
+========================================================= */
+
+function hideCustomScrollbar() {
+
+  if (
+    customScrollbar
+  ) {
+
+    customScrollbar.classList.remove(
+      "active"
+    );
+
+    customScrollbar.classList.remove(
+      "visible"
+    );
+
+  }
+
+
+  if (
+    scrollPageIndicator
+  ) {
+
+    scrollPageIndicator.classList.remove(
+      "show"
     );
 
   }
@@ -1391,50 +2455,362 @@ function hideFullscreenControls() {
 }
 
 
-/*
-  Auto scroll বন্ধ হলে controls আবার দেখা যাবে।
-*/
+/* =========================================================
+   SHOW CUSTOM SCROLLBAR
+========================================================= */
 
-function showFullscreenControls() {
+function showCustomScrollbar() {
 
-  document.body.classList.remove(
-    "controls-hidden"
+  if (
+    !document.fullscreenElement
+  ) {
+
+    return;
+
+  }
+
+
+  createCustomScrollbar();
+
+
+  customScrollbar.classList.add(
+    "active"
   );
+
+
+  customScrollbar.classList.add(
+    "visible"
+  );
+
+
+  clearTimeout(
+    scrollbarHideTimer
+  );
+
+
+  scrollbarHideTimer =
+    setTimeout(
+      function() {
+
+        if (
+          !scrollbarDragging
+        ) {
+
+          customScrollbar.classList.remove(
+            "visible"
+          );
+
+        }
+
+      },
+      1800
+    );
 
 }
 
 
-/*
-  Fullscreen অবস্থায় screen-এর যেকোনো জায়গায়
-  click করলে controls আবার দেখা যাবে।
-*/
+/* =========================================================
+   GET SCROLL INFO
+========================================================= */
 
-document.addEventListener(
-  "click",
-  function(event) {
+function getScrollInfo() {
 
-    if (
-      document.fullscreenElement &&
-      isScrolling &&
-      document.body.classList.contains(
-        "controls-hidden"
-      )
-    ) {
+  const scrollTop =
+    window.scrollY;
 
-      /*
-        Control bar-এর ভেতরে click হলে
-        এই action চালাব না।
-      */
+
+  const viewportHeight =
+    window.innerHeight;
+
+
+  const documentHeight =
+    Math.max(
+      document.documentElement.scrollHeight,
+      document.body.scrollHeight
+    );
+
+
+  const trackHeight =
+    customScrollbarTrack
+      ? customScrollbarTrack.clientHeight
+      : Math.max(
+          0,
+          viewportHeight - 16
+        );
+
+
+  const thumbHeight =
+    Math.max(
+      45,
+      (
+        viewportHeight /
+        Math.max(
+          viewportHeight,
+          documentHeight
+        )
+      ) * trackHeight
+    );
+
+
+  const maxScroll =
+    Math.max(
+      1,
+      documentHeight -
+      viewportHeight
+    );
+
+
+  const maxThumbTop =
+    Math.max(
+      0,
+      trackHeight -
+      thumbHeight
+    );
+
+
+  const thumbTop =
+    (
+      scrollTop /
+      maxScroll
+    ) *
+    maxThumbTop;
+
+
+  return {
+
+    scrollTop,
+
+    viewportHeight,
+
+    documentHeight,
+
+    trackHeight,
+
+    thumbHeight,
+
+    maxScroll,
+
+    maxThumbTop,
+
+    thumbTop
+
+  };
+
+}
+
+
+/* =========================================================
+   UPDATE CUSTOM SCROLLBAR
+========================================================= */
+
+function updateCustomScrollbar() {
+
+  if (
+    !document.fullscreenElement
+  ) {
+
+    return;
+
+  }
+
+
+  createCustomScrollbar();
+
+
+  const info =
+    getScrollInfo();
+
+
+  customScrollbarThumb.style.height =
+    `${info.thumbHeight}px`;
+
+
+  customScrollbarThumb.style.transform =
+    `translateY(${info.thumbTop}px)`;
+
+
+  updateCurrentPageIndicator();
+
+}
+
+
+/* =========================================================
+   GET CURRENT PAGE
+========================================================= */
+
+function getCurrentPageNumber() {
+
+  const pages =
+    document.querySelectorAll(
+      ".page-wrapper"
+    );
+
+
+  if (
+    !pages.length
+  ) {
+
+    return {
+
+      current: 0,
+
+      total: 0
+
+    };
+
+  }
+
+
+  const currentPosition =
+    window.scrollY +
+    (
+      window.innerHeight /
+      2
+    );
+
+
+  let currentPage =
+    1;
+
+
+  pages.forEach(
+    function(page, index) {
+
+      const top =
+        page.offsetTop;
+
+
+      const bottom =
+        top +
+        page.offsetHeight;
+
 
       if (
-        event.target.closest("#mobile-controls")
+        currentPosition >= top &&
+        currentPosition <= bottom
       ) {
 
-        return;
+        currentPage =
+          index + 1;
 
       }
 
-      showFullscreenControls();
+    }
+  );
+
+
+  /*
+    If we're near the very bottom,
+    make sure last page is selected.
+  */
+
+  if (
+    window.scrollY >=
+    pages[
+      pages.length - 1
+    ].offsetTop
+  ) {
+
+    currentPage =
+      pages.length;
+
+  }
+
+
+  return {
+
+    current:
+      currentPage,
+
+    total:
+      pages.length
+
+  };
+
+}
+
+
+/* =========================================================
+   UPDATE PAGE INDICATOR
+========================================================= */
+
+function updateCurrentPageIndicator() {
+
+  if (
+    !scrollPageIndicator
+  ) {
+
+    return;
+
+  }
+
+
+  const page =
+    getCurrentPageNumber();
+
+
+  if (
+    !page.total
+  ) {
+
+    return;
+
+  }
+
+
+  scrollPageIndicator.textContent =
+    "Page " +
+    page.current +
+    " / " +
+    page.total;
+
+
+  const info =
+    getScrollInfo();
+
+
+  const indicatorTop =
+    info.thumbTop +
+    (
+      info.thumbHeight /
+      2
+    );
+
+
+  scrollPageIndicator.style.top =
+    `${indicatorTop + 8}px`;
+
+}
+
+
+/* =========================================================
+   MOUSE NEAR RIGHT EDGE
+========================================================= */
+
+document.addEventListener(
+  "mousemove",
+  function(event) {
+
+    if (
+      !document.fullscreenElement
+    ) {
+
+      return;
+
+    }
+
+
+    /*
+      Only activate scrollbar when
+      mouse comes close to right edge.
+    */
+
+    if (
+      event.clientX >=
+      window.innerWidth - 45
+    ) {
+
+      showCustomScrollbar();
 
     }
 
@@ -1442,57 +2818,435 @@ document.addEventListener(
 );
 
 
-/*
-  Auto Scroll শুরু হলে fullscreen check করে
-  controls hide করা হবে।
-*/
+/* =========================================================
+   SCROLLBAR HOVER
+========================================================= */
 
-const originalStartAutoScroll =
-  startAutoScroll;
+function setupCustomScrollbarEvents() {
 
-startAutoScroll = function() {
+  /*
+    Mouse enters scrollbar
+  */
 
-  originalStartAutoScroll();
+  customScrollbar.addEventListener(
+    "mouseenter",
+    function() {
 
-  hideFullscreenControls();
+      showCustomScrollbar();
 
-};
-
-
-/*
-  Auto Scroll বন্ধ হলে controls আবার দেখা যাবে।
-*/
-
-const originalStopAutoScroll =
-  stopAutoScroll;
-
-stopAutoScroll = function(resetButton = true) {
-
-  originalStopAutoScroll(resetButton);
-
-  showFullscreenControls();
-
-};
+    }
+  );
 
 
-/*
-  Fullscreen থেকে বের হলে controls অবশ্যই
-  আবার দেখা যাবে।
-*/
+  /*
+    Mouse leaves scrollbar
+  */
+
+  customScrollbar.addEventListener(
+    "mouseleave",
+    function() {
+
+      if (
+        !scrollbarDragging
+      ) {
+
+        clearTimeout(
+          scrollbarHideTimer
+        );
+
+
+        scrollbarHideTimer =
+          setTimeout(
+            function() {
+
+              customScrollbar.classList.remove(
+                "visible"
+              );
+
+            },
+            600
+          );
+
+      }
+
+    }
+  );
+
+
+  /*
+    Start dragging thumb
+  */
+
+  customScrollbarThumb.addEventListener(
+    "mousedown",
+    function(event) {
+
+      if (
+        !document.fullscreenElement
+      ) {
+
+        return;
+
+      }
+
+
+      event.preventDefault();
+
+
+      event.stopPropagation();
+
+
+      scrollbarDragging =
+        true;
+
+
+      customScrollbarThumb.classList.add(
+        "dragging"
+      );
+
+
+      customScrollbar.classList.add(
+        "visible"
+      );
+
+
+      scrollPageIndicator.classList.add(
+        "show"
+      );
+
+
+      const thumbRect =
+        customScrollbarThumb.getBoundingClientRect();
+
+
+      scrollbarDragOffset =
+        event.clientY -
+        thumbRect.top;
+
+
+      updateCurrentPageIndicator();
+
+    }
+  );
+
+
+  /*
+    Click track to jump
+  */
+
+  customScrollbarTrack.addEventListener(
+    "click",
+    function(event) {
+
+      if (
+        event.target ===
+        customScrollbarThumb
+      ) {
+
+        return;
+
+      }
+
+
+      const rect =
+        customScrollbarTrack.getBoundingClientRect();
+
+
+      const info =
+        getScrollInfo();
+
+
+      let mouseY =
+        event.clientY -
+        rect.top;
+
+
+      let thumbTop =
+        mouseY -
+        (
+          info.thumbHeight /
+          2
+        );
+
+
+      thumbTop =
+        Math.max(
+          0,
+          Math.min(
+            thumbTop,
+            info.maxThumbTop
+          )
+        );
+
+
+      const percentage =
+        info.maxThumbTop > 0
+
+          ? thumbTop /
+            info.maxThumbTop
+
+          : 0;
+
+
+      window.scrollTo(
+        0,
+        percentage *
+        info.maxScroll
+      );
+
+
+      updateCustomScrollbar();
+
+
+      scrollPageIndicator.classList.add(
+        "show"
+      );
+
+
+      setTimeout(
+        function() {
+
+          if (
+            !scrollbarDragging
+          ) {
+
+            scrollPageIndicator.classList.remove(
+              "show"
+            );
+
+          }
+
+        },
+        1000
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   GLOBAL MOUSE DRAG
+========================================================= */
 
 document.addEventListener(
-  "fullscreenchange",
+  "mousemove",
+  function(event) {
+
+    if (
+      !scrollbarDragging
+    ) {
+
+      return;
+
+    }
+
+
+    if (
+      !document.fullscreenElement
+    ) {
+
+      return;
+
+    }
+
+
+    const info =
+      getScrollInfo();
+
+
+    const trackRect =
+      customScrollbarTrack.getBoundingClientRect();
+
+
+    let thumbTop =
+      event.clientY -
+      trackRect.top -
+      scrollbarDragOffset;
+
+
+    thumbTop =
+      Math.max(
+        0,
+        Math.min(
+          thumbTop,
+          info.maxThumbTop
+        )
+      );
+
+
+    const percentage =
+      info.maxThumbTop > 0
+
+        ? thumbTop /
+          info.maxThumbTop
+
+        : 0;
+
+
+    const newScrollTop =
+      percentage *
+      info.maxScroll;
+
+
+    window.scrollTo(
+      0,
+      newScrollTop
+    );
+
+
+    updateCustomScrollbar();
+
+
+    scrollPageIndicator.classList.add(
+      "show"
+    );
+
+  }
+);
+
+
+/* =========================================================
+   END DRAG
+========================================================= */
+
+document.addEventListener(
+  "mouseup",
   function() {
 
-    if (!document.fullscreenElement) {
+    if (
+      !scrollbarDragging
+    ) {
 
-      showFullscreenControls();
+      return;
 
-    } else if (isScrolling) {
+    }
 
-      hideFullscreenControls();
+
+    scrollbarDragging =
+      false;
+
+
+    customScrollbarThumb.classList.remove(
+      "dragging"
+    );
+
+
+    updateCurrentPageIndicator();
+
+
+    setTimeout(
+      function() {
+
+        scrollPageIndicator.classList.remove(
+          "show"
+        );
+
+      },
+      1200
+    );
+
+
+    showCustomScrollbar();
+
+  }
+);
+
+
+/* =========================================================
+   NORMAL SCROLL UPDATE
+========================================================= */
+
+window.addEventListener(
+  "scroll",
+  function() {
+
+    if (
+      document.fullscreenElement
+    ) {
+
+      updateCustomScrollbar();
+
+    }
+
+  },
+  {
+    passive: true
+  }
+);
+
+
+/* =========================================================
+   RESIZE UPDATE
+========================================================= */
+
+window.addEventListener(
+  "resize",
+  function() {
+
+    if (
+      document.fullscreenElement
+    ) {
+
+      updateCustomScrollbar();
 
     }
 
   }
+);
+
+
+/* =========================================================
+   IMAGE LOAD UPDATE
+========================================================= */
+
+document.addEventListener(
+  "load",
+  function(event) {
+
+    if (
+      event.target &&
+      (
+        event.target.classList.contains(
+          "page-image"
+        ) ||
+        event.target.classList.contains(
+          "pdf-page"
+        )
+      )
+    ) {
+
+      if (
+        document.fullscreenElement
+      ) {
+
+        updateCustomScrollbar();
+
+      }
+
+    }
+
+  },
+  true
+);
+
+
+/* =========================================================
+   INITIALIZE CUSTOM SYSTEM
+========================================================= */
+
+injectScrollbarCSS();
+
+createCustomScrollbar();
+
+
+/* =========================================================
+   INITIAL STATUS
+========================================================= */
+
+setScrollSpeed(150);
+
+setStatus(
+  "কোনো Comic খোলা হয়নি"
 );
