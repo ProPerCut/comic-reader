@@ -1,1606 +1,1865 @@
 /* =========================================================
-   COMIC READER
-   ========================================================= */
-
-
-/* =========================================================
-   ELEMENTS
+   COMIC READER - COMPLETE JAVASCRIPT
+   CBZ / CBR / ZIP / RAR / PDF / IMAGE / FOLDER
+   AUTO SCROLL / ZOOM / FIT / FULLSCREEN / DRAG & DROP
 ========================================================= */
 
-const fileInput = document.getElementById("file-input");
-const folderInput = document.getElementById("folder-input");
+document.addEventListener("DOMContentLoaded", () => {
 
-const pagesList = document.getElementById("pages-list");
-const placeholder = document.getElementById("placeholder");
+    /* =====================================================
+       ELEMENTS
+    ===================================================== */
 
-const readerContainer = document.getElementById("reader-container");
+    const fileInput = document.getElementById("file-input");
+    const folderInput = document.getElementById("folder-input");
 
-const statusText = document.getElementById("status-text");
-const pageCount = document.getElementById("page-count");
+    const pagesList = document.getElementById("pages-list");
+    const placeholder = document.getElementById("placeholder");
 
-const scrollToggle = document.getElementById("scroll-toggle");
+    const statusText = document.getElementById("status-text");
+    const pageCount = document.getElementById("page-count");
 
-const speedRange = document.getElementById("speed-range");
-const speedNumber = document.getElementById("speed-number");
+    const scrollToggle = document.getElementById("scroll-toggle");
+    const speedRange = document.getElementById("speed-range");
+    const speedVal = document.getElementById("speed-val");
 
-const mobileScroll = document.getElementById("mobile-scroll");
-const mobileSpeed = document.getElementById("mobile-speed");
+    const zoomOut = document.getElementById("zoom-out");
+    const zoomIn = document.getElementById("zoom-in");
+    const zoomVal = document.getElementById("zoom-val");
 
-const zoomOut = document.getElementById("zoom-out");
-const zoomIn = document.getElementById("zoom-in");
+    const fitWidth = document.getElementById("fit-width");
+    const fullscreenBtn = document.getElementById("fullscreen-btn");
 
-const mobileZoomOut = document.getElementById("mobile-zoom-out");
-const mobileZoomIn = document.getElementById("mobile-zoom-in");
+    const mobileScroll = document.getElementById("mobile-scroll");
+    const mobileSpeed = document.getElementById("mobile-speed");
+    const mobileZoomOut = document.getElementById("mobile-zoom-out");
+    const mobileZoomIn = document.getElementById("mobile-zoom-in");
 
-const zoomVal = document.getElementById("zoom-val");
+    const readerContainer = document.getElementById("reader-container");
 
-const fitWidth = document.getElementById("fit-width");
+    /* =====================================================
+       VARIABLES
+    ===================================================== */
 
-const fullscreenBtn = document.getElementById("fullscreen-btn");
+    let currentObjectURLs = [];
 
-const fullscreenPageBar =
-  document.getElementById("fullscreen-page-bar");
+    let isScrolling = false;
+    let animationFrame = null;
+    let lastScrollTime = null;
 
-const fullscreenPageTrack =
-  document.getElementById("fullscreen-page-track");
+    let currentSpeed = 10;
 
-const fullscreenPageThumb =
-  document.getElementById("fullscreen-page-thumb");
+    let zoomLevel = 100;
+    const MIN_ZOOM = 25;
+    const MAX_ZOOM = 300;
+    const ZOOM_STEP = 10;
 
-const fullscreenPageNumber =
-  document.getElementById("fullscreen-page-number");
+    let currentPage = 0;
+    let totalPages = 0;
 
+    let currentArchive = null;
 
-/* =========================================================
-   VARIABLES
-========================================================= */
+    /* =====================================================
+       SPEED SETTINGS
+       Very slow = 1 px/s
+       Very fast = 1000 px/s
+    ===================================================== */
 
-let currentImages = [];
+    function setupSpeedControls() {
 
-let objectUrls = [];
+        const controls = [speedRange, mobileSpeed];
 
-let isScrolling = false;
+        controls.forEach(control => {
 
-let animationFrame = null;
+            if (!control) return;
 
-let scrollSpeed = 10;
+            control.min = "1";
+            control.max = "1000";
+            control.step = "1";
 
-let zoomLevel = 1;
+            /*
+              Existing HTML has value=150.
+              We change the starting speed to 10 px/s.
+              User can choose 1, 2, 3... etc.
+            */
 
-let fitMode = true;
+            control.value = "10";
+        });
 
-let currentFileName = "";
+        currentSpeed = 10;
 
-let fullscreenControlsTimer = null;
-
-let pageCountTotal = 0;
-
-
-/* =========================================================
-   PDF WORKER
-========================================================= */
-
-if (window.pdfjsLib) {
-
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
-}
-
-
-/* =========================================================
-   SPEED
-========================================================= */
-
-function normalizeSpeed(value) {
-
-  let speed = Number(value);
-
-  if (!Number.isFinite(speed)) {
-    speed = 10;
-  }
-
-  speed = Math.max(0.5, Math.min(50, speed));
-
-  /*
-    Keep values clean.
-    Example:
-    2.500 -> 2.5
-  */
-
-  speed = Math.round(speed * 2) / 2;
-
-  return speed;
-}
-
-
-function setSpeed(value, restart = true) {
-
-  scrollSpeed = normalizeSpeed(value);
-
-  speedRange.value = scrollSpeed;
-
-  speedNumber.value = scrollSpeed;
-
-  mobileSpeed.value = scrollSpeed;
-
-  if (isScrolling && restart) {
-
-    stopAutoScroll();
-
-    startAutoScroll();
-
-  }
-
-}
-
-
-/* Desktop slider */
-
-speedRange.addEventListener("input", function () {
-
-  setSpeed(this.value);
-
-});
-
-
-/* Desktop number box */
-
-speedNumber.addEventListener("input", function () {
-
-  setSpeed(this.value, false);
-
-});
-
-
-speedNumber.addEventListener("change", function () {
-
-  setSpeed(this.value);
-
-});
-
-
-speedNumber.addEventListener("keydown", function (event) {
-
-  if (event.key === "Enter") {
-
-    setSpeed(this.value);
-
-    this.blur();
-
-  }
-
-});
-
-
-/* Mobile slider */
-
-mobileSpeed.addEventListener("input", function () {
-
-  setSpeed(this.value);
-
-});
-
-
-/* =========================================================
-   AUTO SCROLL
-========================================================= */
-
-function startAutoScroll() {
-
-  stopAutoScroll();
-
-  isScrolling = true;
-
-  scrollToggle.textContent = "⏸ Auto Scroll";
-
-  scrollToggle.classList.add("active");
-
-  mobileScroll.textContent = "⏸";
-
-
-  let lastTime = performance.now();
-
-  let remainder = 0;
-
-
-  function scrollLoop(currentTime) {
-
-    if (!isScrolling) {
-      return;
+        updateSpeedDisplay();
     }
 
+    function updateSpeedDisplay() {
 
-    const deltaTime =
-      Math.min(currentTime - lastTime, 100);
-
-    lastTime = currentTime;
-
-
-    /*
-      scrollSpeed = pixels per second
-
-      Example:
-
-      0.5 px/s
-      1 px/s
-      2.5 px/s
-      10 px/s
-      20 px/s
-
-      Fractional movement is stored in remainder
-      so very slow speeds actually work smoothly.
-    */
-
-    const pixelsToMove =
-      (scrollSpeed * deltaTime) / 1000;
-
-    remainder += pixelsToMove;
-
-
-    if (remainder >= 0.1) {
-
-      const move =
-        Math.floor(remainder * 100) / 100;
-
-      window.scrollBy(0, move);
-
-      remainder -= move;
-
-    }
-
-
-    const bottomReached =
-      window.innerHeight +
-      window.scrollY >=
-      document.documentElement.scrollHeight - 2;
-
-
-    if (bottomReached) {
-
-      stopAutoScroll();
-
-      return;
-
-    }
-
-
-    animationFrame =
-      requestAnimationFrame(scrollLoop);
-
-  }
-
-
-  animationFrame =
-    requestAnimationFrame(scrollLoop);
-
-}
-
-
-function stopAutoScroll() {
-
-  isScrolling = false;
-
-  if (animationFrame !== null) {
-
-    cancelAnimationFrame(animationFrame);
-
-    animationFrame = null;
-
-  }
-
-  scrollToggle.textContent =
-    "▶ Auto Scroll";
-
-  scrollToggle.classList.remove("active");
-
-  mobileScroll.textContent = "▶";
-
-}
-
-
-function toggleAutoScroll() {
-
-  if (isScrolling) {
-
-    stopAutoScroll();
-
-  } else {
-
-    startAutoScroll();
-
-  }
-
-}
-
-
-scrollToggle.addEventListener(
-  "click",
-  toggleAutoScroll
-);
-
-
-mobileScroll.addEventListener(
-  "click",
-  toggleAutoScroll
-);
-
-
-/* =========================================================
-   IMAGE FILE CHECK
-========================================================= */
-
-function isImageFile(fileName) {
-
-  return /\.(jpg|jpeg|png|webp|gif|bmp|avif)$/i
-    .test(fileName);
-
-}
-
-
-/* =========================================================
-   SORT IMAGES
-========================================================= */
-
-function sortImages(images) {
-
-  return images.sort((a, b) => {
-
-    return a.name.localeCompare(
-      b.name,
-      undefined,
-      {
-        numeric: true,
-        sensitivity: "base"
-      }
-    );
-
-  });
-
-}
-
-
-/* =========================================================
-   CLEAN OLD URLS
-========================================================= */
-
-function cleanupObjectUrls() {
-
-  objectUrls.forEach(url => {
-
-    try {
-
-      URL.revokeObjectURL(url);
-
-    } catch (error) {}
-
-  });
-
-  objectUrls = [];
-
-}
-
-
-/* =========================================================
-   RESET READER
-========================================================= */
-
-function resetReader() {
-
-  stopAutoScroll();
-
-  cleanupObjectUrls();
-
-  pagesList.innerHTML = "";
-
-  currentImages = [];
-
-  pageCountTotal = 0;
-
-  updatePageCounter();
-
-}
-
-
-/* =========================================================
-   STATUS
-========================================================= */
-
-function setStatus(text) {
-
-  statusText.textContent = text;
-
-}
-
-
-function updatePageCounter() {
-
-  pageCount.textContent =
-    `${pageCountTotal} pages`;
-
-  updateFullscreenPage();
-
-}
-
-
-/* =========================================================
-   PROCESS FILES
-========================================================= */
-
-async function processFiles(files) {
-
-  if (!files || !files.length) {
-    return;
-  }
-
-
-  resetReader();
-
-
-  placeholder.style.display = "block";
-
-  placeholder.innerHTML = `
-    <div class="welcome-icon">⏳</div>
-    <h1>Loading...</h1>
-    <p>Comic প্রসেস হচ্ছে। একটু অপেক্ষা করুন...</p>
-  `;
-
-
-  const fileArray =
-    Array.from(files);
-
-
-  /*
-    If a folder was selected,
-    only image files are used.
-  */
-
-  const imageFiles =
-    fileArray.filter(file =>
-      isImageFile(file.name)
-    );
-
-
-  /*
-    Folder / multiple images
-  */
-
-  if (
-    imageFiles.length > 0 &&
-    !isArchiveFile(fileArray[0].name) &&
-    !isPDFFile(fileArray[0].name)
-  ) {
-
-    currentFileName =
-      imageFiles[0].webkitRelativePath
-      ? imageFiles[0].webkitRelativePath.split("/")[0]
-      : "Image Folder";
-
-
-    const images =
-      imageFiles.map(file => {
-
-        const url =
-          URL.createObjectURL(file);
-
-        objectUrls.push(url);
-
-        return {
-          name:
-            file.webkitRelativePath ||
-            file.name,
-
-          url: url
-        };
-
-      });
-
-
-    renderImages(images);
-
-    return;
-  }
-
-
-  /*
-    Main file
-  */
-
-  const file = fileArray[0];
-
-  currentFileName = file.name;
-
-
-  try {
-
-    if (isPDFFile(file.name)) {
-
-      await processPDF(file);
-
-    }
-
-    else if (isArchiveFile(file.name)) {
-
-      await processArchive(file);
-
-    }
-
-    else if (isImageFile(file.name)) {
-
-      const url =
-        URL.createObjectURL(file);
-
-      objectUrls.push(url);
-
-      renderImages([
-        {
-          name: file.name,
-          url: url
+        if (speedRange) {
+            speedRange.value = currentSpeed;
         }
-      ]);
 
+        if (mobileSpeed) {
+            mobileSpeed.value = currentSpeed;
+        }
+
+        if (speedVal) {
+            speedVal.textContent = currentSpeed;
+        }
     }
 
-    else {
+    function setSpeed(value) {
 
-      throw new Error(
-        "Unsupported file type"
-      );
+        let speed = Number(value);
 
+        if (!Number.isFinite(speed)) {
+            speed = 10;
+        }
+
+        speed = Math.round(speed);
+
+        if (speed < 1) speed = 1;
+        if (speed > 1000) speed = 1000;
+
+        currentSpeed = speed;
+
+        updateSpeedDisplay();
     }
 
-  }
+    /* =====================================================
+       INITIALIZE SPEED
+    ===================================================== */
 
-  catch (error) {
-
-    console.error(error);
-
-    placeholder.style.display = "block";
-
-    placeholder.innerHTML = `
-      <div class="welcome-icon">❌</div>
-
-      <h1>ফাইল লোড করা যায়নি</h1>
-
-      <p>
-        ফাইলটি damaged হতে পারে অথবা
-        formatটি supported নয়।
-      </p>
-    `;
-
-    setStatus("ফাইল লোড করতে সমস্যা হয়েছে");
-
-  }
-
-}
+    setupSpeedControls();
 
 
-/* =========================================================
-   FILE TYPE
-========================================================= */
+    /* =====================================================
+       FILE INPUT
+    ===================================================== */
 
-function isArchiveFile(name) {
+    if (fileInput) {
 
-  return /\.(cbz|cbr|zip|rar)$/i
-    .test(name);
+        fileInput.addEventListener("change", async (event) => {
 
-}
+            const files = Array.from(event.target.files || []);
 
+            if (files.length) {
+                await processFiles(files);
+            }
 
-function isPDFFile(name) {
+            /*
+              Reset input so the same file can be selected again.
+            */
 
-  return /\.pdf$/i
-    .test(name);
-
-}
-
-
-/* =========================================================
-   ARCHIVE PROCESSOR
-========================================================= */
-
-async function processArchive(file) {
-
-  setStatus(
-    `${file.name} — archive খুলছে...`
-  );
+            event.target.value = "";
+        });
+    }
 
 
-  /*
-    Make sure Unarchiver.js is available.
-  */
+    /* =====================================================
+       FOLDER INPUT
+    ===================================================== */
 
-  if (
-    typeof window.Unarchiver === "undefined"
-  ) {
+    if (folderInput) {
 
-    throw new Error(
-      "Unarchiver library not loaded"
-    );
+        folderInput.addEventListener("change", async (event) => {
 
-  }
+            const files = Array.from(event.target.files || []);
 
+            if (files.length) {
+                await processFolder(files);
+            }
 
-  const archive =
-    await Unarchiver.open(file);
-
-
-  const entries =
-    archive.entries || [];
+            event.target.value = "";
+        });
+    }
 
 
-  const imageEntries =
-    entries.filter(entry => {
+    /* =====================================================
+       DRAG & DROP
+    ===================================================== */
 
-      return (
-        entry.is_file &&
-        isImageFile(entry.name)
-      );
+    document.addEventListener("dragover", (event) => {
+
+        event.preventDefault();
+
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = "copy";
+        }
+
+    });
+
+    document.addEventListener("drop", async (event) => {
+
+        event.preventDefault();
+
+        const files = Array.from(event.dataTransfer?.files || []);
+
+        if (!files.length) return;
+
+        await processFiles(files);
 
     });
 
 
-  if (!imageEntries.length) {
+    /* =====================================================
+       MAIN FILE PROCESSOR
+    ===================================================== */
 
-    throw new Error(
-      "No images found inside archive"
-    );
+    async function processFiles(files) {
 
-  }
+        if (!files || !files.length) return;
 
+        stopAutoScroll();
 
-  sortImages(imageEntries);
+        clearReader();
 
+        showLoading("ফাইল লোড হচ্ছে... একটু অপেক্ষা করুন ⏳");
 
-  const images = [];
+        try {
 
+            /*
+              If multiple files are selected and they are images,
+              treat them as a comic page sequence.
+            */
 
-  /*
-    Read images one by one.
-    This is more memory-friendly than
-    extracting everything simultaneously.
-  */
+            const imageFiles = files.filter(isImageFile);
 
-  for (
-    let i = 0;
-    i < imageEntries.length;
-    i++
-  ) {
+            if (
+                files.length > 1 &&
+                imageFiles.length === files.length
+            ) {
 
-    const entry =
-      imageEntries[i];
+                await processImageFiles(imageFiles);
 
-
-    setStatus(
-      `Loading page ${i + 1} / ${imageEntries.length}`
-    );
+                return;
+            }
 
 
-    const entryFile =
-      await entry.read();
+            const file = files[0];
+
+            const name = file.name.toLowerCase();
 
 
-    const url =
-      URL.createObjectURL(entryFile);
+            /* =================================================
+               PDF
+            ================================================= */
+
+            if (name.endsWith(".pdf")) {
+
+                await processPDF(file);
+
+                return;
+            }
 
 
-    objectUrls.push(url);
+            /* =================================================
+               CBZ / CBR / ZIP / RAR
+            ================================================= */
+
+            if (
+                name.endsWith(".cbz") ||
+                name.endsWith(".cbr") ||
+                name.endsWith(".zip") ||
+                name.endsWith(".rar")
+            ) {
+
+                await processArchive(file);
+
+                return;
+            }
 
 
-    images.push({
+            /* =================================================
+               SINGLE IMAGE
+            ================================================= */
 
-      name: entry.name,
+            if (isImageFile(file)) {
 
-      url: url
+                await processImageFiles([file]);
 
-    });
+                return;
+            }
 
-  }
 
+            throw new Error(
+                "এই ফাইলটি supported format নয়।"
+            );
 
-  try {
+        } catch (error) {
 
-    if (
-      typeof Unarchiver.close === "function"
-    ) {
+            console.error("Comic Reader Error:", error);
 
-      Unarchiver.close(archive);
+            showError(
+                "ফাইল লোড করা যায়নি",
+                getFriendlyError(error)
+            );
+
+        }
 
     }
 
-  } catch (error) {}
+
+    /* =====================================================
+       FOLDER PROCESSOR
+    ===================================================== */
+
+    async function processFolder(files) {
+
+        if (!files || !files.length) return;
+
+        stopAutoScroll();
+
+        clearReader();
+
+        showLoading("Folder থেকে pages খোঁজা হচ্ছে... 📂");
+
+        try {
+
+            const images = files.filter(isImageFile);
+
+            if (!images.length) {
+
+                throw new Error(
+                    "Folder-এর ভিতরে কোনো supported image পাওয়া যায়নি।"
+                );
+            }
+
+            await processImageFiles(images);
+
+        } catch (error) {
+
+            console.error(error);
+
+            showError(
+                "Folder লোড করা যায়নি",
+                getFriendlyError(error)
+            );
+        }
+
+    }
 
 
-  renderImages(images);
+    /* =====================================================
+       IMAGE FILE CHECK
+    ===================================================== */
 
-}
+    function isImageFile(file) {
 
+        if (!file) return false;
 
-/* =========================================================
-   PDF PROCESSOR
-========================================================= */
+        const name = file.name.toLowerCase();
 
-async function processPDF(file) {
-
-  if (!window.pdfjsLib) {
-
-    throw new Error(
-      "PDF.js not loaded"
-    );
-
-  }
+        return (
+            file.type.startsWith("image/") ||
+            /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(name)
+        );
+    }
 
 
-  setStatus(
-    `${file.name} — PDF খুলছে...`
-  );
+    /* =====================================================
+       PROCESS NORMAL IMAGE FILES
+    ===================================================== */
 
+    async function processImageFiles(files) {
 
-  const arrayBuffer =
-    await file.arrayBuffer();
+        if (!files.length) return;
 
+        const images = files.map(file => {
 
-  const pdf =
-    await pdfjsLib.getDocument({
-      data: arrayBuffer
-    }).promise;
+            return {
+                name: file.webkitRelativePath || file.name,
+                file: file
+            };
 
+        });
 
-  const images = [];
+        images.sort((a, b) => {
 
+            return naturalSort(
+                a.name,
+                b.name
+            );
 
-  for (
-    let pageNumber = 1;
-    pageNumber <= pdf.numPages;
-    pageNumber++
-  ) {
+        });
 
-    setStatus(
-      `PDF page ${pageNumber} / ${pdf.numPages}`
-    );
+        renderImages(images);
 
-
-    const page =
-      await pdf.getPage(pageNumber);
-
-
-    const viewport =
-      page.getViewport({
-        scale: 2
-      });
-
-
-    const canvas =
-      document.createElement("canvas");
-
-
-    const context =
-      canvas.getContext("2d");
-
-
-    canvas.width =
-      viewport.width;
-
-    canvas.height =
-      viewport.height;
-
-
-    await page.render({
-
-      canvasContext: context,
-
-      viewport: viewport
-
-    }).promise;
-
-
-    const blob =
-      await new Promise(resolve => {
-
-        canvas.toBlob(
-          resolve,
-          "image/jpeg",
-          0.95
+        updateStatus(
+            `${images.length} pages loaded`,
+            `${images.length} pages`
         );
 
-      });
-
-
-    const url =
-      URL.createObjectURL(blob);
-
-
-    objectUrls.push(url);
-
-
-    images.push({
-
-      name:
-        `Page ${String(pageNumber).padStart(5, "0")}`,
-
-      url: url
-
-    });
-
-  }
-
-
-  renderImages(images);
-
-}
-
-
-/* =========================================================
-   RENDER IMAGES
-========================================================= */
-
-function renderImages(images) {
-
-  if (!images || !images.length) {
-
-    placeholder.style.display = "block";
-
-    placeholder.innerHTML = `
-      <div class="welcome-icon">❌</div>
-      <h1>No Pages</h1>
-      <p>ফাইলের মধ্যে কোনো readable image পাওয়া যায়নি।</p>
-    `;
-
-    return;
-
-  }
-
-
-  currentImages =
-    sortImages(images);
-
-
-  pagesList.innerHTML = "";
-
-
-  placeholder.style.display =
-    "none";
-
-
-  currentImages.forEach(
-    (imageData, index) => {
-
-      const wrapper =
-        document.createElement("div");
-
-
-      wrapper.className =
-        "page-wrapper";
-
-
-      wrapper.dataset.page =
-        index + 1;
-
-
-      const img =
-        document.createElement("img");
-
-
-      img.src =
-        imageData.url;
-
-
-      img.alt =
-        `Page ${index + 1}`;
-
-
-      img.loading =
-        index < 3
-          ? "eager"
-          : "lazy";
-
-
-      img.draggable =
-        false;
-
-
-      wrapper.appendChild(img);
-
-
-      pagesList.appendChild(wrapper);
-
-    }
-  );
-
-
-  pageCountTotal =
-    currentImages.length;
-
-
-  updatePageCounter();
-
-
-  setStatus(
-    `${currentFileName} • ${pageCountTotal} pages`
-  );
-
-
-  applyZoom();
-
-}
-
-
-/* =========================================================
-   ZOOM
-========================================================= */
-
-function applyZoom() {
-
-  if (fitMode) {
-
-    document.body.classList.remove(
-      "zoomed"
-    );
-
-
-    zoomVal.textContent =
-      "Fit";
-
-    return;
-
-  }
-
-
-  document.body.classList.add(
-    "zoomed"
-  );
-
-
-  const pages =
-    document.querySelectorAll(
-      ".page-wrapper"
-    );
-
-
-  pages.forEach(page => {
-
-    page.style.width =
-      `${zoomLevel * 100}%`;
-
-  });
-
-
-  zoomVal.textContent =
-    `${Math.round(zoomLevel * 100)}%`;
-
-}
-
-
-function changeZoom(amount) {
-
-  fitMode = false;
-
-
-  zoomLevel += amount;
-
-
-  zoomLevel =
-    Math.max(
-      0.25,
-      Math.min(3, zoomLevel)
-    );
-
-
-  applyZoom();
-
-}
-
-
-zoomIn.addEventListener(
-  "click",
-  () => changeZoom(0.1)
-);
-
-
-zoomOut.addEventListener(
-  "click",
-  () => changeZoom(-0.1)
-);
-
-
-mobileZoomIn.addEventListener(
-  "click",
-  () => changeZoom(0.1)
-);
-
-
-mobileZoomOut.addEventListener(
-  "click",
-  () => changeZoom(-0.1)
-);
-
-
-/* =========================================================
-   FIT WIDTH
-========================================================= */
-
-fitWidth.addEventListener(
-  "click",
-  () => {
-
-    fitMode = true;
-
-    zoomLevel = 1;
-
-    applyZoom();
-
-  }
-);
-
-
-/* =========================================================
-   FULLSCREEN
-========================================================= */
-
-async function toggleFullscreen() {
-
-  try {
-
-    if (!document.fullscreenElement) {
-
-      await document.documentElement.requestFullscreen();
-
-      document.body.classList.add(
-        "fullscreen-mode"
-      );
-
-      showFullscreenControls();
-
-    }
-
-    else {
-
-      await document.exitFullscreen();
-
-    }
-
-  }
-
-  catch (error) {
-
-    console.error(
-      "Fullscreen error:",
-      error
-    );
-
-  }
-
-}
-
-
-fullscreenBtn.addEventListener(
-  "click",
-  toggleFullscreen
-);
-
-
-document.addEventListener(
-  "fullscreenchange",
-  () => {
-
-    if (document.fullscreenElement) {
-
-      document.body.classList.add(
-        "fullscreen-mode"
-      );
-
-      showFullscreenControls();
-
-    }
-
-    else {
-
-      document.body.classList.remove(
-        "fullscreen-mode"
-      );
-
-      fullscreenPageBar.style.opacity =
-        "0";
-
-    }
-
-  }
-);
-
-
-/* =========================================================
-   FULLSCREEN CONTROLS AUTO HIDE
-========================================================= */
-
-function showFullscreenControls() {
-
-  if (
-    !document.fullscreenElement
-  ) {
-    return;
-  }
-
-
-  fullscreenPageBar.style.opacity =
-    "1";
-
-
-  clearTimeout(
-    fullscreenControlsTimer
-  );
-
-
-  fullscreenControlsTimer =
-    setTimeout(() => {
-
-      if (!isScrolling) {
-
-        fullscreenPageBar.style.opacity =
-          "0";
-
-      }
-
-    }, 2500);
-
-}
-
-
-/*
-  Move mouse toward right side
-  to show page scrollbar.
-*/
-
-document.addEventListener(
-  "mousemove",
-  event => {
-
-    if (
-      !document.fullscreenElement
-    ) {
-      return;
     }
 
 
-    if (
-      window.innerWidth - event.clientX < 100
-    ) {
+    /* =====================================================
+       ARCHIVE PROCESSOR
+       CBZ / CBR / ZIP / RAR
+    ===================================================== */
 
-      showFullscreenControls();
+    async function processArchive(file) {
 
-    }
+        if (typeof Unarchiver === "undefined") {
 
-  }
-);
+            throw new Error(
+                "Unarchiver library load হয়নি। Internet connection check করুন।"
+            );
+        }
 
+        showLoading(
+            "Comic archive খুলছে... ⏳"
+        );
 
-/* =========================================================
-   FULLSCREEN PAGE BAR
-========================================================= */
+        /*
+          Unarchiver-এর official browser API:
+          Unarchiver.open(file)
+        */
 
-function updateFullscreenPage() {
+        const archive = await Unarchiver.open(file);
 
-  if (!currentImages.length) {
+        currentArchive = archive;
 
-    fullscreenPageNumber.textContent =
-      "Page 0 / 0";
+        if (
+            !archive ||
+            !archive.entries ||
+            !archive.entries.length
+        ) {
 
-    return;
+            throw new Error(
+                "Archive-এর ভিতরে কোনো file পাওয়া যায়নি।"
+            );
+        }
 
-  }
+        /*
+          শুধুমাত্র image entries নেওয়া হবে।
+        */
 
+        const imageEntries = archive.entries.filter(entry => {
 
-  const scrollTop =
-    window.scrollY;
+            if (!entry || !entry.is_file) {
+                return false;
+            }
 
+            return /\.(jpg|jpeg|png|webp|gif|bmp)$/i.test(
+                entry.name
+            );
 
-  const maxScroll =
-    document.documentElement.scrollHeight -
-    window.innerHeight;
-
-
-  let percentage = 0;
-
-
-  if (maxScroll > 0) {
-
-    percentage =
-      scrollTop / maxScroll;
-
-  }
-
-
-  percentage =
-    Math.max(
-      0,
-      Math.min(1, percentage)
-    );
-
-
-  const trackHeight =
-    fullscreenPageTrack.clientHeight;
+        });
 
 
-  const thumbHeight =
-    fullscreenPageThumb.offsetHeight;
+        if (!imageEntries.length) {
+
+            throw new Error(
+                "Comic archive-এর ভিতরে কোনো image page পাওয়া যায়নি।"
+            );
+        }
 
 
-  const available =
-    trackHeight - thumbHeight;
+        /*
+          Page number অনুযায়ী natural sorting.
+        */
+
+        imageEntries.sort((a, b) => {
+
+            return naturalSort(
+                a.name,
+                b.name
+            );
+
+        });
 
 
-  fullscreenPageThumb.style.top =
-    `${available * percentage}px`;
+        /*
+          Archive entry থেকে image তৈরি।
+        */
+
+        const images = [];
+
+        for (let i = 0; i < imageEntries.length; i++) {
+
+            const entry = imageEntries[i];
+
+            try {
+
+                showLoading(
+                    `Comic page প্রস্তুত হচ্ছে... ${i + 1} / ${imageEntries.length}`
+                );
+
+                const entryFile = await entry.read();
+
+                if (!entryFile) continue;
+
+                const url = URL.createObjectURL(entryFile);
+
+                currentObjectURLs.push(url);
+
+                images.push({
+                    name: entry.name,
+                    url: url
+                });
+
+            } catch (entryError) {
+
+                console.warn(
+                    "Page skipped:",
+                    entry.name,
+                    entryError
+                );
+
+            }
+
+        }
 
 
-  const page =
-    getCurrentPage();
+        if (!images.length) {
+
+            throw new Error(
+                "Archive থেকে কোনো image page read করা যায়নি।"
+            );
+        }
 
 
-  fullscreenPageNumber.textContent =
-    `Page ${page} / ${currentImages.length}`;
-
-}
+        renderImages(images);
 
 
-function getCurrentPage() {
-
-  const wrappers =
-    document.querySelectorAll(
-      ".page-wrapper"
-    );
-
-
-  if (!wrappers.length) {
-    return 0;
-  }
-
-
-  const viewportMiddle =
-    window.scrollY +
-    window.innerHeight / 2;
-
-
-  let closestPage = 1;
-
-  let closestDistance = Infinity;
-
-
-  wrappers.forEach(
-    (wrapper, index) => {
-
-      const rect =
-        wrapper.getBoundingClientRect();
-
-
-      const center =
-        window.scrollY +
-        rect.top +
-        rect.height / 2;
-
-
-      const distance =
-        Math.abs(
-          center - viewportMiddle
+        updateStatus(
+            `${file.name}`,
+            `${images.length} pages`
         );
 
 
-      if (
-        distance < closestDistance
-      ) {
+        /*
+          Archive close করে memory release করার চেষ্টা।
+        */
 
-        closestDistance =
-          distance;
+        try {
 
-        closestPage =
-          index + 1;
+            if (
+                typeof Unarchiver.close === "function"
+            ) {
 
-      }
+                Unarchiver.close(archive);
 
-    }
-  );
+            }
 
+        } catch (closeError) {
 
-  return closestPage;
+            console.warn(
+                "Archive close warning:",
+                closeError
+            );
+        }
 
-}
-
-
-window.addEventListener(
-  "scroll",
-  updateFullscreenPage,
-  {
-    passive: true
-  }
-);
-
-
-window.addEventListener(
-  "resize",
-  updateFullscreenPage
-);
-
-
-/* =========================================================
-   CLICK FULLSCREEN PAGE BAR
-========================================================= */
-
-fullscreenPageTrack.addEventListener(
-  "click",
-  event => {
-
-    const rect =
-      fullscreenPageTrack.getBoundingClientRect();
-
-
-    const percentage =
-      (
-        event.clientY -
-        rect.top
-      ) / rect.height;
-
-
-    const maxScroll =
-      document.documentElement.scrollHeight -
-      window.innerHeight;
-
-
-    window.scrollTo({
-
-      top:
-        maxScroll *
-        Math.max(
-          0,
-          Math.min(1, percentage)
-        ),
-
-      behavior: "auto"
-
-    });
-
-
-    showFullscreenControls();
-
-  }
-);
-
-
-/* =========================================================
-   DRAG FULLSCREEN THUMB
-========================================================= */
-
-let draggingPageBar = false;
-
-
-fullscreenPageThumb.addEventListener(
-  "mousedown",
-  event => {
-
-    draggingPageBar = true;
-
-    event.preventDefault();
-
-  }
-);
-
-
-document.addEventListener(
-  "mouseup",
-  () => {
-
-    draggingPageBar = false;
-
-  }
-);
-
-
-document.addEventListener(
-  "mousemove",
-  event => {
-
-    if (!draggingPageBar) {
-      return;
     }
 
 
-    const rect =
-      fullscreenPageTrack.getBoundingClientRect();
+    /* =====================================================
+       PDF PROCESSOR
+    ===================================================== */
+
+    async function processPDF(file) {
+
+        if (
+            typeof pdfjsLib === "undefined"
+        ) {
+
+            throw new Error(
+                "PDF.js library load হয়নি।"
+            );
+        }
 
 
-    let percentage =
-      (
-        event.clientY -
-        rect.top
-      ) / rect.height;
+        /*
+          PDF.js worker
+        */
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 
-    percentage =
-      Math.max(
-        0,
-        Math.min(1, percentage)
-      );
+        showLoading(
+            "PDF খোলা হচ্ছে... ⏳"
+        );
 
 
-    const maxScroll =
-      document.documentElement.scrollHeight -
-      window.innerHeight;
+        const arrayBuffer = await file.arrayBuffer();
 
 
-    window.scrollTo(
-      0,
-      maxScroll * percentage
-    );
+        const pdf = await pdfjsLib.getDocument({
+            data: arrayBuffer
+        }).promise;
 
 
-    showFullscreenControls();
-
-  }
-);
+        const images = [];
 
 
-/* =========================================================
-   FILE INPUT
-========================================================= */
+        for (
+            let pageNumber = 1;
+            pageNumber <= pdf.numPages;
+            pageNumber++
+        ) {
 
-fileInput.addEventListener(
-  "change",
-  event => {
-
-    processFiles(
-      event.target.files
-    );
-
-  }
-);
+            showLoading(
+                `PDF page তৈরি হচ্ছে... ${pageNumber} / ${pdf.numPages}`
+            );
 
 
-/* =========================================================
-   FOLDER INPUT
-========================================================= */
-
-folderInput.addEventListener(
-  "change",
-  event => {
-
-    processFiles(
-      event.target.files
-    );
-
-  }
-);
+            const page = await pdf.getPage(
+                pageNumber
+            );
 
 
-/* =========================================================
-   DRAG & DROP
-========================================================= */
+            /*
+              High quality rendering.
+            */
 
-readerContainer.addEventListener(
-  "dragover",
-  event => {
-
-    event.preventDefault();
-
-    readerContainer.classList.add(
-      "dragging"
-    );
-
-  }
-);
+            const viewport = page.getViewport({
+                scale: 1.5
+            });
 
 
-readerContainer.addEventListener(
-  "dragleave",
-  () => {
-
-    readerContainer.classList.remove(
-      "dragging"
-    );
-
-  }
-);
+            const canvas =
+                document.createElement("canvas");
 
 
-readerContainer.addEventListener(
-  "drop",
-  event => {
-
-    event.preventDefault();
-
-    readerContainer.classList.remove(
-      "dragging"
-    );
+            const context =
+                canvas.getContext("2d", {
+                    alpha: false
+                });
 
 
-    if (
-      event.dataTransfer.files.length
+            canvas.width =
+                Math.floor(viewport.width);
+
+            canvas.height =
+                Math.floor(viewport.height);
+
+
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+
+
+            const blob =
+                await new Promise(resolve => {
+
+                    canvas.toBlob(
+                        resolve,
+                        "image/jpeg",
+                        0.92
+                    );
+
+                });
+
+
+            if (!blob) continue;
+
+
+            const url =
+                URL.createObjectURL(blob);
+
+
+            currentObjectURLs.push(url);
+
+
+            images.push({
+                name: `Page ${String(pageNumber).padStart(4, "0")}`,
+                url: url
+            });
+
+
+            /*
+              Canvas memory release.
+            */
+
+            canvas.width = 1;
+            canvas.height = 1;
+        }
+
+
+        if (!images.length) {
+
+            throw new Error(
+                "PDF থেকে কোনো page তৈরি করা যায়নি।"
+            );
+        }
+
+
+        renderImages(images);
+
+
+        updateStatus(
+            file.name,
+            `${images.length} pages`
+        );
+
+    }
+
+
+    /* =====================================================
+       RENDER IMAGES
+    ===================================================== */
+
+    function renderImages(images) {
+
+        if (!images || !images.length) {
+
+            throw new Error(
+                "কোনো page পাওয়া যায়নি।"
+            );
+        }
+
+
+        placeholder.style.display =
+            "none";
+
+
+        pagesList.innerHTML = "";
+
+
+        /*
+          Reset page counter
+        */
+
+        currentPage = 0;
+
+        totalPages = images.length;
+
+
+        updatePageCounter();
+
+
+        /*
+          Create all pages.
+        */
+
+        images.forEach((imageData, index) => {
+
+            const wrapper =
+                document.createElement("div");
+
+
+            wrapper.className =
+                "comic-page";
+
+
+            wrapper.dataset.page =
+                String(index + 1);
+
+
+            wrapper.style.width =
+                "100%";
+
+
+            wrapper.style.display =
+                "flex";
+
+
+            wrapper.style.justifyContent =
+                "center";
+
+
+            wrapper.style.position =
+                "relative";
+
+
+            const img =
+                document.createElement("img");
+
+
+            img.className =
+                "comic-image";
+
+
+            img.alt =
+                `Page ${index + 1}`;
+
+
+            img.loading =
+                index < 3
+                    ? "eager"
+                    : "lazy";
+
+
+            img.decoding =
+                "async";
+
+
+            if (imageData.url) {
+
+                img.src =
+                    imageData.url;
+
+            } else if (imageData.file) {
+
+                const url =
+                    URL.createObjectURL(
+                        imageData.file
+                    );
+
+                currentObjectURLs.push(url);
+
+                img.src = url;
+            }
+
+
+            img.style.maxWidth =
+                "100%";
+
+
+            img.style.height =
+                "auto";
+
+
+            img.style.display =
+                "block";
+
+
+            img.style.userSelect =
+                "none";
+
+
+            img.draggable =
+                false;
+
+
+            wrapper.appendChild(img);
+
+            pagesList.appendChild(wrapper);
+
+        });
+
+
+        /*
+          Apply current zoom.
+        */
+
+        applyZoom();
+
+
+        /*
+          Update page number while reading.
+        */
+
+        setupPageObserver();
+
+    }
+
+
+    /* =====================================================
+       PAGE OBSERVER
+    ===================================================== */
+
+    let pageObserver = null;
+
+
+    function setupPageObserver() {
+
+        if (pageObserver) {
+
+            pageObserver.disconnect();
+        }
+
+
+        const pages =
+            document.querySelectorAll(
+                ".comic-page"
+            );
+
+
+        if (!pages.length) return;
+
+
+        pageObserver =
+            new IntersectionObserver(
+                entries => {
+
+                    let bestEntry = null;
+
+                    for (const entry of entries) {
+
+                        if (!entry.isIntersecting) {
+                            continue;
+                        }
+
+                        if (
+                            !bestEntry ||
+                            entry.intersectionRatio >
+                            bestEntry.intersectionRatio
+                        ) {
+
+                            bestEntry = entry;
+                        }
+                    }
+
+
+                    if (bestEntry) {
+
+                        const page =
+                            Number(
+                                bestEntry.target.dataset.page
+                            );
+
+                        if (page) {
+
+                            currentPage =
+                                page;
+
+                            updatePageCounter();
+
+                        }
+                    }
+
+                },
+                {
+                    root: null,
+                    threshold: [
+                        0.1,
+                        0.25,
+                        0.5,
+                        0.75
+                    ]
+                }
+            );
+
+
+        pages.forEach(page => {
+
+            pageObserver.observe(page);
+
+        });
+
+    }
+
+
+    /* =====================================================
+       PAGE COUNTER
+    ===================================================== */
+
+    function updatePageCounter() {
+
+        if (!pageCount) return;
+
+
+        if (!totalPages) {
+
+            pageCount.textContent =
+                "0 pages";
+
+            return;
+        }
+
+
+        pageCount.textContent =
+            `${currentPage || 1} / ${totalPages} pages`;
+    }
+
+
+    /* =====================================================
+       STATUS
+    ===================================================== */
+
+    function updateStatus(
+        text,
+        count
     ) {
 
-      processFiles(
-        event.dataTransfer.files
-      );
+        if (statusText) {
+
+            statusText.textContent =
+                text;
+        }
+
+
+        if (pageCount) {
+
+            pageCount.textContent =
+                count;
+        }
 
     }
 
-  }
-);
+
+    /* =====================================================
+       LOADING SCREEN
+    ===================================================== */
+
+    function showLoading(message) {
+
+        placeholder.style.display =
+            "flex";
+
+        placeholder.style.flexDirection =
+            "column";
+
+        placeholder.style.alignItems =
+            "center";
+
+        placeholder.style.justifyContent =
+            "center";
 
 
-/* =========================================================
-   KEYBOARD SHORTCUTS
-========================================================= */
+        placeholder.innerHTML = `
 
-document.addEventListener(
-  "keydown",
-  event => {
+            <div class="welcome-icon">
+                ⏳
+            </div>
 
-    /*
-      Don't interfere while typing
-      in the speed number box.
-    */
+            <h1>
+                ${escapeHTML(message)}
+            </h1>
 
-    if (
-      document.activeElement ===
-      speedNumber
+            <p>
+                একটু অপেক্ষা করুন...
+            </p>
+
+        `;
+
+
+        if (statusText) {
+
+            statusText.textContent =
+                message;
+        }
+
+
+        if (pageCount) {
+
+            pageCount.textContent =
+                "Loading...";
+        }
+
+    }
+
+
+    /* =====================================================
+       ERROR SCREEN
+    ===================================================== */
+
+    function showError(
+        title,
+        message
     ) {
 
-      return;
+        placeholder.style.display =
+            "flex";
+
+        placeholder.style.flexDirection =
+            "column";
+
+        placeholder.style.alignItems =
+            "center";
+
+        placeholder.style.justifyContent =
+            "center";
+
+
+        placeholder.innerHTML = `
+
+            <div
+                class="welcome-icon"
+                style="font-size:70px;"
+            >
+                ❌
+            </div>
+
+            <h1>
+                ${escapeHTML(title)}
+            </h1>
+
+            <p>
+                ${escapeHTML(message)}
+            </p>
+
+            <p class="small-help">
+                Fileটি valid CBZ/CBR/ZIP/RAR/PDF/Image কিনা
+                নিশ্চিত করুন।
+            </p>
+
+        `;
+
+
+        if (statusText) {
+
+            statusText.textContent =
+                "ফাইল লোড করতে সমস্যা হয়েছে";
+        }
+
+
+        if (pageCount) {
+
+            pageCount.textContent =
+                "0 pages";
+        }
 
     }
 
 
-    if (event.code === "Space") {
+    /* =====================================================
+       FRIENDLY ERROR
+    ===================================================== */
 
-      event.preventDefault();
+    function getFriendlyError(error) {
 
-      toggleAutoScroll();
+        if (!error) {
+
+            return "Unknown error";
+        }
+
+
+        const message =
+            String(
+                error.message ||
+                error
+            );
+
+
+        if (
+            /password|encrypted/i.test(
+                message
+            )
+        ) {
+
+            return "এই archive password-protected বা encrypted।";
+        }
+
+
+        if (
+            /memory|out of memory/i.test(
+                message
+            )
+        ) {
+
+            return "ফাইলটি অনেক বড়। Browser memory শেষ হয়ে যেতে পারে।";
+        }
+
+
+        if (
+            /rar|archive/i.test(
+                message
+            )
+        ) {
+
+            return "Archive formatটি browser-এ পড়তে সমস্যা হয়েছে।";
+        }
+
+
+        return message;
+    }
+
+
+    /* =====================================================
+       CLEAR READER
+    ===================================================== */
+
+    function clearReader() {
+
+        stopAutoScroll();
+
+
+        /*
+          Old object URLs remove
+        */
+
+        currentObjectURLs.forEach(url => {
+
+            try {
+
+                URL.revokeObjectURL(url);
+
+            } catch (error) {}
+
+        });
+
+
+        currentObjectURLs = [];
+
+
+        /*
+          Close old archive
+        */
+
+        if (currentArchive) {
+
+            try {
+
+                if (
+                    typeof Unarchiver !== "undefined" &&
+                    typeof Unarchiver.close === "function"
+                ) {
+
+                    Unarchiver.close(
+                        currentArchive
+                    );
+                }
+
+            } catch (error) {}
+
+            currentArchive = null;
+        }
+
+
+        pagesList.innerHTML = "";
+
+
+        currentPage = 0;
+
+        totalPages = 0;
+
+
+        if (pageObserver) {
+
+            pageObserver.disconnect();
+
+            pageObserver = null;
+        }
+
+
+        updatePageCounter();
 
     }
 
 
-    if (event.key === "+") {
+    /* =====================================================
+       AUTO SCROLL
+       Accurate PX PER SECOND
+    ===================================================== */
 
-      changeZoom(0.1);
+    if (scrollToggle) {
+
+        scrollToggle.addEventListener(
+            "click",
+            () => {
+
+                if (isScrolling) {
+
+                    stopAutoScroll();
+
+                } else {
+
+                    startAutoScroll();
+
+                }
+
+            }
+        );
 
     }
 
 
-    if (event.key === "-") {
+    function startAutoScroll() {
 
-      changeZoom(-0.1);
+        stopAutoScroll();
+
+
+        isScrolling = true;
+
+        lastScrollTime =
+            performance.now();
+
+
+        if (scrollToggle) {
+
+            scrollToggle.textContent =
+                "⏸ Stop Auto Scroll";
+
+            scrollToggle.classList.add(
+                "active"
+            );
+        }
+
+
+        if (mobileScroll) {
+
+            mobileScroll.textContent =
+                "⏸";
+
+        }
+
+
+        animationFrame =
+            requestAnimationFrame(
+                autoScrollLoop
+            );
 
     }
 
 
-    if (event.key === "f") {
+    function autoScrollLoop(timestamp) {
 
-      toggleFullscreen();
+        if (!isScrolling) return;
+
+
+        if (lastScrollTime === null) {
+
+            lastScrollTime =
+                timestamp;
+        }
+
+
+        const delta =
+            (timestamp - lastScrollTime) /
+            1000;
+
+
+        lastScrollTime =
+            timestamp;
+
+
+        /*
+          Exact px/s movement.
+
+          Example:
+          1 px/s  = extremely slow
+          10 px/s = very slow
+          50 px/s = slow
+          100 px/s = normal
+          500 px/s = fast
+          1000 px/s = very fast
+        */
+
+        const movement =
+            currentSpeed * delta;
+
+
+        window.scrollBy(
+            0,
+            movement
+        );
+
+
+        /*
+          Automatically stop at bottom.
+        */
+
+        const bottomReached =
+            window.innerHeight +
+            window.scrollY >=
+            document.documentElement.scrollHeight - 2;
+
+
+        if (bottomReached) {
+
+            stopAutoScroll();
+
+            return;
+        }
+
+
+        animationFrame =
+            requestAnimationFrame(
+                autoScrollLoop
+            );
 
     }
 
-  }
-);
+
+    function stopAutoScroll() {
+
+        isScrolling = false;
+
+        lastScrollTime = null;
 
 
-/* =========================================================
-   INITIAL SPEED
-========================================================= */
+        if (animationFrame !== null) {
 
-setSpeed(
-  speedRange.value,
-  false
-);
+            cancelAnimationFrame(
+                animationFrame
+            );
 
-
-/* =========================================================
-   INITIAL PAGE INDICATOR
-========================================================= */
-
-updateFullscreenPage();
+            animationFrame = null;
+        }
 
 
-/* =========================================================
-   READY
-========================================================= */
+        if (scrollToggle) {
 
-console.log(
-  "Comic Reader ready."
-);
+            scrollToggle.textContent =
+                "▶ Auto Scroll";
+
+            scrollToggle.classList.remove(
+                "active"
+            );
+        }
+
+
+        if (mobileScroll) {
+
+            mobileScroll.textContent =
+                "▶";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       SPEED CONTROL
+    ===================================================== */
+
+    if (speedRange) {
+
+        speedRange.addEventListener(
+            "input",
+            event => {
+
+                setSpeed(
+                    event.target.value
+                );
+
+            }
+        );
+
+    }
+
+
+    if (mobileSpeed) {
+
+        mobileSpeed.addEventListener(
+            "input",
+            event => {
+
+                setSpeed(
+                    event.target.value
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       MOBILE AUTO SCROLL
+    ===================================================== */
+
+    if (mobileScroll) {
+
+        mobileScroll.addEventListener(
+            "click",
+            () => {
+
+                if (isScrolling) {
+
+                    stopAutoScroll();
+
+                } else {
+
+                    startAutoScroll();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       ZOOM
+    ===================================================== */
+
+    if (zoomIn) {
+
+        zoomIn.addEventListener(
+            "click",
+            () => {
+
+                changeZoom(
+                    ZOOM_STEP
+                );
+
+            }
+        );
+
+    }
+
+
+    if (zoomOut) {
+
+        zoomOut.addEventListener(
+            "click",
+            () => {
+
+                changeZoom(
+                    -ZOOM_STEP
+                );
+
+            }
+        );
+
+    }
+
+
+    if (mobileZoomIn) {
+
+        mobileZoomIn.addEventListener(
+            "click",
+            () => {
+
+                changeZoom(
+                    ZOOM_STEP
+                );
+
+            }
+        );
+
+    }
+
+
+    if (mobileZoomOut) {
+
+        mobileZoomOut.addEventListener(
+            "click",
+            () => {
+
+                changeZoom(
+                    -ZOOM_STEP
+                );
+
+            }
+        );
+
+    }
+
+
+    function changeZoom(amount) {
+
+        zoomLevel += amount;
+
+
+        if (zoomLevel < MIN_ZOOM) {
+
+            zoomLevel =
+                MIN_ZOOM;
+        }
+
+
+        if (zoomLevel > MAX_ZOOM) {
+
+            zoomLevel =
+                MAX_ZOOM;
+        }
+
+
+        applyZoom();
+
+    }
+
+
+    function applyZoom() {
+
+        const images =
+            document.querySelectorAll(
+                ".comic-image"
+            );
+
+
+        images.forEach(img => {
+
+            img.style.width =
+                `${zoomLevel}%`;
+
+            img.style.maxWidth =
+                "none";
+
+        });
+
+
+        if (zoomVal) {
+
+            zoomVal.textContent =
+                `${zoomLevel}%`;
+        }
+
+    }
+
+
+    /* =====================================================
+       FIT WIDTH
+    ===================================================== */
+
+    if (fitWidth) {
+
+        fitWidth.addEventListener(
+            "click",
+            () => {
+
+                zoomLevel =
+                    100;
+
+                const images =
+                    document.querySelectorAll(
+                        ".comic-image"
+                    );
+
+
+                images.forEach(img => {
+
+                    img.style.width =
+                        "100%";
+
+                    img.style.maxWidth =
+                        "100%";
+
+                });
+
+
+                if (zoomVal) {
+
+                    zoomVal.textContent =
+                        "100%";
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       FULLSCREEN
+    ===================================================== */
+
+    if (fullscreenBtn) {
+
+        fullscreenBtn.addEventListener(
+            "click",
+            async () => {
+
+                try {
+
+                    if (
+                        !document.fullscreenElement
+                    ) {
+
+                        await document.documentElement.requestFullscreen();
+
+                    } else {
+
+                        await document.exitFullscreen();
+
+                    }
+
+                } catch (error) {
+
+                    console.warn(
+                        "Fullscreen error:",
+                        error
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       FULLSCREEN BUTTON ICON
+    ===================================================== */
+
+    document.addEventListener(
+        "fullscreenchange",
+        () => {
+
+            if (!fullscreenBtn) return;
+
+
+            if (
+                document.fullscreenElement
+            ) {
+
+                fullscreenBtn.textContent =
+                    "⛶";
+
+            } else {
+
+                fullscreenBtn.textContent =
+                    "⛶";
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       KEYBOARD SHORTCUTS
+    ===================================================== */
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            /*
+              Do not interfere while typing.
+            */
+
+            const tag =
+                document.activeElement?.tagName;
+
+
+            if (
+                tag === "INPUT" ||
+                tag === "TEXTAREA"
+            ) {
+
+                return;
+            }
+
+
+            /*
+              Space = Auto Scroll
+            */
+
+            if (
+                event.code === "Space"
+            ) {
+
+                event.preventDefault();
+
+
+                if (isScrolling) {
+
+                    stopAutoScroll();
+
+                } else {
+
+                    startAutoScroll();
+
+                }
+
+            }
+
+
+            /*
+              + = Zoom in
+            */
+
+            if (
+                event.key === "+" ||
+                event.key === "="
+            ) {
+
+                changeZoom(
+                    ZOOM_STEP
+                );
+
+            }
+
+
+            /*
+              - = Zoom out
+            */
+
+            if (
+                event.key === "-" ||
+                event.key === "_"
+            ) {
+
+                changeZoom(
+                    -ZOOM_STEP
+                );
+
+            }
+
+
+            /*
+              F = Fullscreen
+            */
+
+            if (
+                event.key.toLowerCase() === "f"
+            ) {
+
+                if (fullscreenBtn) {
+
+                    fullscreenBtn.click();
+
+                }
+
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       NATURAL SORT
+       Page 1
+       Page 2
+       Page 10
+       Page 11
+    ===================================================== */
+
+    function naturalSort(a, b) {
+
+        return String(a).localeCompare(
+            String(b),
+            undefined,
+            {
+                numeric: true,
+                sensitivity: "base"
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       HTML ESCAPE
+    ===================================================== */
+
+    function escapeHTML(text) {
+
+        return String(text)
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+
+    }
+
+
+    /* =====================================================
+       INITIAL STATUS
+    ===================================================== */
+
+    if (statusText) {
+
+        statusText.textContent =
+            "কোনো Comic খোলা হয়নি";
+
+    }
+
+
+    if (pageCount) {
+
+        pageCount.textContent =
+            "0 pages";
+
+    }
+
+
+    console.log(
+        "📖 Comic Reader loaded successfully."
+    );
+
+});
