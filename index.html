@@ -71,21 +71,13 @@
         <input
           type="range"
           id="speed-range"
-          min="0.5"
-          max="50"
-          value="10"
-          step="0.5"
+          min="10"
+          max="1000"
+          value="150"
+          step="10"
         >
 
-        <input
-          type="number"
-          id="speed-number"
-          min="0.5"
-          max="50"
-          value="10"
-          step="0.5"
-          title="Speed in pixels per second"
-        >
+        <span id="speed-val">150</span>
 
         <span>px/s</span>
 
@@ -161,26 +153,10 @@
 
     </section>
 
+
     <div id="pages-list"></div>
 
   </main>
-
-
-  <!-- =========================
-       FULLSCREEN PAGE INDICATOR
-  ========================== -->
-
-  <div id="fullscreen-page-bar">
-
-    <div id="fullscreen-page-track">
-      <div id="fullscreen-page-thumb"></div>
-    </div>
-
-    <div id="fullscreen-page-number">
-      Page 0 / 0
-    </div>
-
-  </div>
 
 
   <!-- =========================
@@ -196,10 +172,10 @@
     <input
       type="range"
       id="mobile-speed"
-      min="0.5"
-      max="50"
-      value="10"
-      step="0.5"
+      min="10"
+      max="1000"
+      value="150"
+      step="10"
     >
 
     <button id="mobile-zoom-out" class="mobile-btn">
@@ -214,7 +190,6 @@
 
 
   <!-- JavaScript -->
-
   <script src="script.js"></script>
 
 </body>
